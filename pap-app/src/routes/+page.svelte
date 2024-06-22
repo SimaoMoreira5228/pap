@@ -1,16 +1,23 @@
 <script lang="ts">
-  import { Button } from "$lib/components/ui/button";
-  import { Input } from "$lib/components/ui/input";
+  import { env } from "$env/dynamic/private";
   import { H1, P } from "$lib/components/ui/typography/index";
   import { invoke } from "@tauri-apps/api/tauri";
+  import { onMount } from "svelte";
+  import { toast } from "svelte-sonner";
 
   let name = "";
   let greetMsg = "";
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    greetMsg = await invoke("greet", { name });
-  }
+  onMount(async () => {
+    try {
+      await invoke("init", {
+        dbUrl: env.DB_CONNECTION,
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to connect to the database");
+    }
+  });
 </script>
 
 <div class="flex justify-center items-center flex-col gap-2">
@@ -21,11 +28,6 @@
   </div>
 
   <P>Click on the Tauri, Vite, and SvelteKit logos to learn more.</P>
-
-  <form class="flex flex-row gap-2" on:submit|preventDefault={greet}>
-    <Input id="greet-input" placeholder="Enter a name..." bind:value={name} />
-    <Button type="submit">Greet</Button>
-  </form>
 
   <P>{greetMsg}</P>
 </div>
