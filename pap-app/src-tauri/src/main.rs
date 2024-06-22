@@ -27,19 +27,20 @@ struct LivroAsResponse {
     id_secao: i32,
     categoria: Option<String>,
     sub_categoria: Option<String>,
+    requisitado: bool,
 }
 
 #[tauri::command]
 fn init(db_url: String, state: tauri::State<'_, Mutex<Option<Database>>>) -> Result<(), String> {
-    println!("Initializing database with url: {}", db_url);
-
     let pool = Pool::new(db_url.as_ref()).map_err(|e| format!("Failed to create pool: {}", e))?;
     *state.lock().unwrap() = Some(Database { pool });
     Ok(())
 }
 
 #[tauri::command]
-fn get_unrequested_books(
+async fn get_books(
+    limit: i32,
+    offset: i32,
     state: tauri::State<'_, Mutex<Option<Database>>>,
 ) -> Result<Vec<LivroAsResponse>, String> {
     let state_lock = state.lock().unwrap();
@@ -51,8 +52,9 @@ fn get_unrequested_books(
         .map_err(|e| format!("Failed to get connection: {}", e))?;
 
     let books = conn
-        .query_map(
-            "SELECT * FROM livro WHERE id NOT IN (SELECT id_livro_requisitado FROM requisicao)",
+        .exec_map(
+            "SELECT * FROM livros LIMIT :limit OFFSET :offset",
+            params! { "limit" => limit, "offset" => offset },
             |(
                 id,
                 nome,
@@ -88,28 +90,36 @@ fn get_unrequested_books(
     for book in books {
         let autor = conn
             .exec_first(
-                "SELECT nome FROM autor WHERE id = :id",
+                "SELECT nome FROM autores WHERE id = :id",
                 params! { "id" => book.id_autor },
             )
-            .unwrap()
+            .map_err(|e| format!("Failed to query: {}", e))?
             .unwrap();
 
-        let categoria = conn.exec_first("SELECT nome FROM categoria WHERE id = (SELECT id_categoria FROM sub_categoria WHERE id = :id)", params! { "id" => book.id_sub_categoria }).unwrap().unwrap();
+        let categoria = conn.exec_first("SELECT nome FROM categorias WHERE id = (SELECT id_categoria FROM sub_categorias WHERE id = :id)", params! { "id" => book.id_sub_categoria }).map_err(|e| format!("Failed to query: {}", e))?.unwrap();
 
         let sub_categoria = conn
             .exec_first(
-                "SELECT nome FROM sub_categoria WHERE id = :id",
+                "SELECT nome FROM sub_categorias WHERE id = :id",
                 params! { "id" => book.id_sub_categoria },
             )
-            .unwrap()
+            .map_err(|e| format!("Failed to query: {}", e))?
             .unwrap();
 
         let publisher = conn
             .exec_first(
-                "SELECT nome FROM editora WHERE id = :id",
+                "SELECT nome FROM editoras WHERE id = :id",
                 params! { "id" => book.id_editora },
             )
-            .unwrap()
+            .map_err(|e| format!("Failed to query: {}", e))?
+            .unwrap();
+
+        let is_requested = conn
+            .exec_first(
+                "SELECT COUNT(*) FROM requisicoes WHERE id_livro_requisitado = :id",
+                params! { "id" => book.id },
+            )
+            .map_err(|e| format!("Failed to query: {}", e))?
             .unwrap();
 
         books_as_response.push(LivroAsResponse {
@@ -125,6 +135,7 @@ fn get_unrequested_books(
             id_secao: book.id_secao,
             categoria,
             sub_categoria,
+            requisitado: is_requested,
         });
     }
 
@@ -132,9 +143,7 @@ fn get_unrequested_books(
 }
 
 #[tauri::command]
-fn get_requested_books(
-    state: tauri::State<'_, Mutex<Option<Database>>>,
-) -> Result<Vec<LivroAsResponse>, String> {
+async fn get_books_count(state: tauri::State<'_, Mutex<Option<Database>>>) -> Result<i32, String> {
     let state_lock = state.lock().unwrap();
     let db = state_lock.as_ref().ok_or("Database not initialized")?;
 
@@ -143,95 +152,16 @@ fn get_requested_books(
         .get_conn()
         .map_err(|e| format!("Failed to get connection: {}", e))?;
 
-    let books = conn
-        .query_map(
-            "SELECT * FROM livro WHERE id IN (SELECT id_livro_requisitado FROM requisicao)",
-            |(
-                id,
-                nome,
-                resumo,
-                n_paginas,
-                idioma,
-                img_url,
-                ano_edicao,
-                id_autor,
-                id_editora,
-                id_secao,
-                id_sub_categoria,
-            )| {
-                Livro {
-                    id,
-                    nome,
-                    resumo,
-                    n_paginas,
-                    idioma,
-                    img_url,
-                    ano_edicao,
-                    id_autor,
-                    id_editora,
-                    id_secao,
-                    id_sub_categoria,
-                }
-            },
-        )
+    let count = conn
+        .exec_first("SELECT COUNT(*) FROM livros", ())
         .map_err(|e| format!("Failed to query: {}", e))?;
 
-    let mut books_as_response = Vec::new();
-
-    for book in books {
-        let autor = conn
-            .exec_first(
-                "SELECT nome FROM autor WHERE id = :id",
-                params! { "id" => book.id_autor },
-            )
-            .unwrap()
-            .unwrap();
-
-        let categoria = conn.exec_first("SELECT nome FROM categoria WHERE id = (SELECT id_categoria FROM sub_categoria WHERE id = :id)", params! { "id" => book.id_sub_categoria }).unwrap().unwrap();
-
-        let sub_categoria = conn
-            .exec_first(
-                "SELECT nome FROM sub_categoria WHERE id = :id",
-                params! { "id" => book.id_sub_categoria },
-            )
-            .unwrap()
-            .unwrap();
-
-        let publisher = conn
-            .exec_first(
-                "SELECT nome FROM editora WHERE id = :id",
-                params! { "id" => book.id_editora },
-            )
-            .unwrap()
-            .unwrap();
-
-        books_as_response.push(LivroAsResponse {
-            id: book.id,
-            nome: book.nome,
-            resumo: book.resumo,
-            n_paginas: book.n_paginas,
-            idioma: book.idioma,
-            img_url: book.img_url,
-            ano_edicao: book.ano_edicao,
-            autor,
-            editora: publisher,
-            id_secao: book.id_secao,
-            categoria,
-            sub_categoria,
-        });
-    }
-
-    Ok(books_as_response)
+    Ok(count.unwrap())
 }
-
 fn main() {
     tauri::Builder::default()
         .manage(Mutex::new(None::<Database>))
-        .invoke_handler(tauri::generate_handler![
-            init,
-            get_unrequested_books,
-            get_requested_books
-        ])
+        .invoke_handler(tauri::generate_handler![init, get_books, get_books_count])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
