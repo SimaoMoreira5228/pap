@@ -18,7 +18,9 @@
       }
     },
     "windows": [
-      {}
+      {
+        "title": "Libra Hub"
+      }
     ],
     "security": {
       "csp": null

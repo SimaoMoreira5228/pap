@@ -1,11 +1,14 @@
 <script lang="ts">
   import "../app.css";
-  import * as Resizable from "$lib/components/ui/resizable";
-  import { toggleMode } from "mode-watcher";
+  import { toggleMode, setMode, localStorageKey } from "mode-watcher";
   import { Button } from "$lib/components/ui/button";
   import { Sun, Moon, Settings2, BookCopy } from "lucide-svelte";
   import { Toaster } from "$lib/components/ui/sonner";
   import { goto } from "$app/navigation";
+
+  if (!localStorage.getItem(localStorageKey)) {
+    setMode("light");
+  }
 </script>
 
 <Toaster />
@@ -24,29 +27,21 @@
   <span class="sr-only">Mudar o tema</span>
 </Button>
 
-<div class="w-screen h-screen flex justify-start items-center">
-  <Resizable.PaneGroup direction="horizontal">
-    <Resizable.Pane maxSize={10} minSize={3} defaultSize={3}>
-      <div class="flex flex-col justify-between items-center py-6 h-full">
-        <div>
-          <Button variant="outline" size="icon" on:click={() => goto("/")}>
-            <BookCopy class="w-[1.2rem] h-[1.2rem]" />
-          </Button>
-        </div>
-        <Button
-          variant="outline"
-          size="icon"
-          on:click={() => goto("/settings")}
-        >
-          <Settings2 class="w-[1.2rem] h-[1.2rem]" />
+<div class="w-screen h-screen flex justify-start">
+  <div class="flex flex-row w-full h-full">
+    <div class="flex flex-col justify-between items-center py-6 h-full px-2">
+      <div>
+        <Button variant="outline" size="icon" on:click={() => goto("/")}>
+          <BookCopy class="w-[1.2rem] h-[1.2rem]" />
         </Button>
       </div>
-    </Resizable.Pane>
-    <Resizable.Handle />
-    <Resizable.Pane>
-      <div class="flex justify-center items-center w-full h-full p-4">
-        <slot />
-      </div>
-    </Resizable.Pane>
-  </Resizable.PaneGroup>
+      <Button variant="outline" size="icon" on:click={() => goto("/settings")}>
+        <Settings2 class="w-[1.2rem] h-[1.2rem]" />
+      </Button>
+    </div>
+    <div class="border-l border-gray-200"></div>
+    <div class="flex justify-center items-center w-full h-full p-4">
+      <slot />
+    </div>
+  </div>
 </div>
