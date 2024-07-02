@@ -19,7 +19,8 @@
     },
     "windows": [
       {
-        "title": "Libra Hub"
+        "title": "Libra Hub",
+        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --enable-features=OverlayScrollbar"
       }
     ],
     "security": {

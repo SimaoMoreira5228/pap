@@ -14,6 +14,7 @@ pub struct Bibliotecario {
     pub id: i32,
     pub nome: String,
     pub password: String,
+    pub cargo: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -77,4 +78,11 @@ pub struct SubCategoria {
     pub id: i32,
     pub id_categoria: i32,
     pub nome: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Permissao {
+    pub id: i32,
+    pub acao: String,
+    pub label: String,
 }

@@ -31,15 +31,23 @@
   <div class="flex flex-row w-full h-full">
     <div class="flex flex-col justify-between items-center py-6 h-full px-2">
       <div>
-        <Button variant="outline" size="icon" on:click={() => goto("/")}>
+        <Button
+          variant="outline"
+          size="icon"
+          on:click={() => goto("/books", { invalidateAll: true })}
+        >
           <BookCopy class="w-[1.2rem] h-[1.2rem]" />
         </Button>
       </div>
-      <Button variant="outline" size="icon" on:click={() => goto("/settings")}>
+      <Button
+        variant="outline"
+        size="icon"
+        on:click={() => goto("/settings", { invalidateAll: true })}
+      >
         <Settings2 class="w-[1.2rem] h-[1.2rem]" />
       </Button>
     </div>
-    <div class="border-l border-gray-200"></div>
+    <div class="border-l border-muted"></div>
     <div class="flex justify-center items-center w-full h-full p-4">
       <slot />
     </div>

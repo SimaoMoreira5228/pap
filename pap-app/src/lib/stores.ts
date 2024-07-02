@@ -1,37 +1,71 @@
 import { invoke } from "@tauri-apps/api";
 import { toast } from "svelte-sonner";
-import { writable } from "svelte/store";
+import { writable, type Writable } from "svelte/store";
 
-export const DbStringStore = writable(localStorage.getItem("dbUrl") || "");
+class Store<T> {
+  private value: T;
+  private useLocalStorage = false;
+  private name: string;
+  private store: Writable<T>;
 
-let DbString: string;
+  constructor(
+    value: T,
+    useLocalStorage: boolean = false,
+    name: string = "",
+    callback?: (value: T) => void
+  ) {
+    this.value = value;
+    this.useLocalStorage = useLocalStorage;
+    this.name = name;
 
-DbStringStore.subscribe(async (value) => {
-  try {
-    if (value === "") {
-      toast.info("A string de conexão da base de dados está vazia");
-      return;
+    this.store = writable(this.value);
+
+    if (this.useLocalStorage) {
+      localStorage.setItem(this.name, JSON.stringify(value));
     }
 
-    await invoke("init", {
-      dbUrl: value,
-    });
-
-    toast.success("Connectado com sucesso à base de dados");
-  } catch (error) {
-    console.error(error);
-    toast.error("Erro ao conectar à base de dados");
+    if (callback) {
+      this.store.subscribe(callback);
+    }
   }
 
-  localStorage.setItem("dbUrl", value);
+  set(value: T) {
+    this.value = value;
+    this.store.set(value);
 
-  DbString = value;
-});
+    if (this.useLocalStorage) {
+      localStorage.setItem(this.name, JSON.stringify(value));
+    }
+  }
 
-export const DbStringGet = () => {
-  return localStorage.getItem("dbUrl") || "";
-};
+  get() {
+    return this.value;
+  }
+}
 
-export const DbStringSet = (value: string) => {
-  DbStringStore.set(value);
-};
+const dbStringStore = new Store(
+  JSON.parse(localStorage.getItem("dbUrl") || ""),
+  true,
+  "dbUrl",
+  async (value) => {
+    try {
+      if (value === "") {
+        toast.info("A string de conexão da base de dados está vazia");
+        return;
+      }
+
+      await invoke("init", {
+        dbUrl: value,
+      });
+
+      toast.success("Connectado com sucesso à base de dados");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao conectar à base de dados");
+    }
+  }
+);
+
+const jwtStore = new Store("");
+
+export { dbStringStore, jwtStore };

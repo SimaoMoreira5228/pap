@@ -13,3 +13,9 @@ export interface Livro {
   sub_categoria?: string;
   requisitado: boolean;
 }
+
+export interface permissao {
+  id: number;
+  acao: string;
+  label: string;
+}
