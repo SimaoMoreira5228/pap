@@ -8,36 +8,56 @@
   import { call } from "$lib/call";
   import type { permissao } from "$lib/types";
   import { toast } from "svelte-sonner";
-  import { jwtStore } from "$lib/stores";
+  import { jwtStore, redirectStore } from "$lib/stores";
+  import { writable } from "svelte/store";
 
   if (!localStorage.getItem(localStorageKey)) {
     setMode("light");
   }
 
   let settingsPermission = false;
+  let showBar = false;
+  let refreshBar = writable(false);
 
-  afterNavigate(async () => {
-    try {
-      if (await call<boolean>("check_librarians_existence")) {
-        const permissionId = (await call<permissao[]>("get_permissions")).find(
-          (permission) => permission.acao === "mudar_configuracoes"
-        )?.id;
+  redirectStore.setCallback((value) => {
+    refreshBar.set(value);
+  });
 
-        if (jwtStore.get() !== "") {
-          const permissions = await call<permissao[]>(
-            "get_librarian_permissions"
-          );
+  refreshBar.subscribe(async (value) => {
+    if (value) {
+      showBar = false;
+      try {
+        if (await call<boolean>("check_librarians_existence")) {
+          const permissionId = (
+            await call<permissao[]>("get_permissions")
+          ).find((permission) => permission.acao === "mudar_configuracoes")?.id;
 
-          settingsPermission = permissions.some(
-            (permission) => permission.id === permissionId
-          );
+          if (jwtStore.get() !== "") {
+            const permissions = await call<permissao[]>(
+              "get_librarian_permissions"
+            );
+
+            settingsPermission = permissions.some(
+              (permission) => permission.id === permissionId
+            );
+          }
+        } else {
+          settingsPermission = true;
         }
-      } else {
-        settingsPermission = true;
+
+        showBar = true;
+      } catch (error) {
+        toast.error(error as string);
+        if (error === "Base de dados não inicializada") {
+          goto("/setup");
+          showBar = false;
+        }
       }
-    } catch (error) {
-      toast.error(error as string);
     }
+  });
+
+  afterNavigate(() => {
+    refreshBar.set(true);
   });
 </script>
 
@@ -59,23 +79,25 @@
 
 <div class="w-screen h-screen flex justify-start">
   <div class="flex flex-row w-full h-full">
-    <div class="flex flex-col justify-between items-center py-6 h-full px-2">
-      <div>
-        <Button variant="outline" size="icon" on:click={() => goto("/books")}>
-          <BookCopy class="w-[1.2rem] h-[1.2rem]" />
-        </Button>
+    {#if showBar}
+      <div class="flex flex-col justify-between items-center py-6 h-full px-2">
+        <div>
+          <Button variant="outline" size="icon" on:click={() => goto("/books")}>
+            <BookCopy class="w-[1.2rem] h-[1.2rem]" />
+          </Button>
+        </div>
+        {#if settingsPermission}
+          <Button
+            variant="outline"
+            size="icon"
+            on:click={() => goto("/settings")}
+          >
+            <Settings2 class="w-[1.2rem] h-[1.2rem]" />
+          </Button>
+        {/if}
       </div>
-      {#if settingsPermission}
-        <Button
-          variant="outline"
-          size="icon"
-          on:click={() => goto("/settings")}
-        >
-          <Settings2 class="w-[1.2rem] h-[1.2rem]" />
-        </Button>
-      {/if}
-    </div>
-    <div class="border-l border-muted"></div>
+      <div class="border-l border-muted"></div>
+    {/if}
     <div class="flex justify-center items-center w-full h-full p-4">
       <slot />
     </div>

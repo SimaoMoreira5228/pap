@@ -41,10 +41,25 @@ class Store<T> {
   get() {
     return this.value;
   }
+
+  setCallback(callback: (value: T) => void) {
+    this.store.subscribe(callback);
+  }
 }
 
+function safeParseJSON<T>(json: string | null, fallback: T): T {
+  if (json === null) return fallback;
+  try {
+    return JSON.parse(json);
+  } catch {
+    return fallback;
+  }
+}
+
+const redirectStore = new Store(false);
+
 const dbStringStore = new Store(
-  JSON.parse(localStorage.getItem("dbUrl") || ""),
+  safeParseJSON<string>(localStorage.getItem("dbUrl"), ""),
   true,
   "dbUrl",
   async (value) => {
@@ -68,9 +83,9 @@ const dbStringStore = new Store(
 const jwtStore = new Store("");
 
 const loanPeriodStore = new Store(
-  parseInt(JSON.parse(localStorage.getItem("loanPeriod") || "") || "7"),
+  safeParseJSON<number>(localStorage.getItem("loanPeriod"), 7),
   true,
   "loanPeriod"
 );
 
-export { dbStringStore, jwtStore, loanPeriodStore };
+export { dbStringStore, jwtStore, loanPeriodStore, redirectStore };
