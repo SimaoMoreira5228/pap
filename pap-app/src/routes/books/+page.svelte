@@ -4,15 +4,12 @@
   import type { Livro } from "$lib/types";
   import { ChevronLeft, ChevronRight } from "lucide-svelte";
   import Icon from "@iconify/svelte";
-  import * as Card from "$lib/components/ui/card";
   import { Button } from "$lib/components/ui/button";
   import { toast } from "svelte-sonner";
   import { writable } from "svelte/store";
   import { call } from "$lib/call";
   import { jwtStore } from "$lib/stores";
-  import { goto } from "$app/navigation";
-
-  if (jwtStore.get() === "") goto("/login", { invalidateAll: true });
+  import BooksDisplay from "$lib/components/custom/BooksDisplay.svelte";
 
   let books: Livro[] = [];
   let booksPerPage = 12;
@@ -72,36 +69,7 @@
         />
       </div>
     {:else}
-      <div class="py-6 px-4 sm:px-6 lg:px-8 overflow-auto">
-        <div
-          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4"
-        >
-          {#each books as book, index}
-            <Card.Root class="shadow-md">
-              <Card.Content>
-                <a href="" class="block">
-                  <img
-                    src={book.img_url}
-                    alt={`Book ${index + 1}`}
-                    width={150}
-                    height={250}
-                    class="w-full h-48 object-cover"
-                  />
-                </a>
-                <div>
-                  <a href="" class="block">
-                    <H3 class="text-lg font-bold line-clamp-2">{book.nome}</H3>
-                    <P class="text-muted-foreground">{book.autor}</P>
-                    <P class="text-xs line-clamp-2">
-                      {book.resumo}
-                    </P>
-                  </a>
-                </div>
-              </Card.Content>
-            </Card.Root>
-          {/each}
-        </div>
-      </div>
+      <BooksDisplay {books} />
     {/if}
     <div class="flex justify-evenly items-center w-full pt-2">
       <Button on:click={() => (currentPage -= 1)} size="icon" variant="outline">

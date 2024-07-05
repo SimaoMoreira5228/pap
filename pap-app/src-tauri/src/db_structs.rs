@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Autor {
     pub id: i32,
     pub nome: String,
@@ -9,7 +9,7 @@ pub struct Autor {
     pub data_morte: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct Bibliotecario {
     pub id: i32,
     pub nome: String,
@@ -17,13 +17,13 @@ pub struct Bibliotecario {
     pub cargo: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct Categoria {
     pub id: i32,
     pub nome: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct Editora {
     pub id: i32,
     pub nome: String,
@@ -33,7 +33,7 @@ pub struct Editora {
     pub email: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Leitor {
     pub id: i32,
     pub nome: String,
@@ -42,7 +42,7 @@ pub struct Leitor {
     pub email: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Livro {
     pub id: i32,
     pub nome: String,
@@ -57,32 +57,50 @@ pub struct Livro {
     pub id_sub_categoria: Option<i32>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Copy, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Requisicao {
     pub id: i32,
     pub id_leitor: i32,
     pub id_livro_requisitado: i32,
-    pub data_requisicao: String,
-    pub data_entrega: Option<String>,
+    pub data_requisicao: chrono::DateTime<chrono::Utc>,
+    pub data_entrega: Option<chrono::DateTime<chrono::Utc>>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct Secao {
     pub id: i32,
     pub id_categoria: i32,
     pub nome: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, sqlx::FromRow)]
 pub struct SubCategoria {
     pub id: i32,
     pub id_categoria: i32,
     pub nome: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Permissao {
     pub id: i32,
     pub acao: String,
     pub label: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct LivroAsResponse {
+    pub id: i32,
+    pub nome: String,
+    pub resumo: Option<String>,
+    pub n_paginas: i32,
+    pub idioma: String,
+    pub img_url: Option<String>,
+    pub ano_edicao: Option<String>,
+    pub autor: Option<String>,
+    pub autor_id: Option<i32>,
+    pub editora: String,
+    pub id_secao: i32,
+    pub categoria: Option<String>,
+    pub sub_categoria: Option<String>,
+    pub requisitado: bool,
 }

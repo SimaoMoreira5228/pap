@@ -1,15 +1,46 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
+  import { call } from "$lib/call";
   import { Button } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label";
-  import { dbStringStore } from "$lib/stores";
+  import { dbStringStore, jwtStore, loanPeriodStore } from "$lib/stores";
+  import type { permissao } from "$lib/types";
+  import { onMount } from "svelte";
+  import { toast } from "svelte-sonner";
 
   let dbUrl = dbStringStore.get();
+  let loanPeriod = loanPeriodStore.get();
+
+  onMount(async () => {
+    try {
+      if (await call<boolean>("check_librarians_existence")) {
+        const permissionId = (await call<permissao[]>("get_permissions")).find(
+          (permission) => permission.acao === "mudar_configuracoes"
+        )?.id;
+
+        if (jwtStore.get() !== "") {
+          const has_permission = await call<boolean>(
+            "does_librarian_has_permission",
+            {
+              permissionId,
+            }
+          );
+
+          if (!has_permission) {
+            return goto("/");
+          }
+        }
+      }
+    } catch (error) {
+      toast.error(error as string);
+    }
+  });
 </script>
 
-<div class="flex justify-start items-start flex-col gap-2 w-full h-full">
-  <form class="flex flex-col gap-2 w-full h-full">
-    <Label for="dbUrl">Database URL</Label>
+<div class="flex justify-start items-start flex-col gap-6 w-full h-full">
+  <form class="flex flex-col gap-2 w-full">
+    <Label for="dbUrl">URL da base de dados</Label>
     <div class="flex flex-row gap-2 w-full h-full">
       <Input
         id="dbUrl"
@@ -25,7 +56,28 @@
           dbStringStore.set(dbUrl);
         }}
       >
-        Save
+        Guardar
+      </Button>
+    </div>
+  </form>
+  <form class="flex flex-col gap-2 w-full">
+    <Label for="loanPeriod">Período de empréstimo</Label>
+    <div class="flex flex-row gap-2 w-full h-full">
+      <Input
+        id="loanPeriod"
+        type="number"
+        placeholder="Loan Period"
+        bind:value={loanPeriod}
+        class="w-[30%]"
+      />
+      <Button
+        type="submit"
+        on:click={(event) => {
+          event.preventDefault();
+          loanPeriodStore.set(loanPeriod);
+        }}
+      >
+        Guardar
       </Button>
     </div>
   </form>

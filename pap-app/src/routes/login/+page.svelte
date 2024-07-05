@@ -43,12 +43,11 @@
       const token = await call<string>("login", { name, password });
 
       jwtStore.set(token);
-
-      goto("/books", { invalidateAll: true });
     } catch (error) {
       toast.error(error as string);
     } finally {
       isLoading.set(false);
+      goto("/books");
     }
   }
 
@@ -80,7 +79,7 @@
 
       window.location.reload();
     } catch (error) {
-      console.log(error);
+      console.error(error);
       toast.error(error as string);
     } finally {
       isLoading.set(false);

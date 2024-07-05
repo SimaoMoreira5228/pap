@@ -4,14 +4,44 @@
   import { Button } from "$lib/components/ui/button";
   import { Sun, Moon, Settings2, BookCopy } from "lucide-svelte";
   import { Toaster } from "$lib/components/ui/sonner";
-  import { goto } from "$app/navigation";
+  import { afterNavigate, goto } from "$app/navigation";
+  import { call } from "$lib/call";
+  import type { permissao } from "$lib/types";
+  import { toast } from "svelte-sonner";
+  import { jwtStore } from "$lib/stores";
 
   if (!localStorage.getItem(localStorageKey)) {
     setMode("light");
   }
+
+  let settingsPermission = false;
+
+  afterNavigate(async () => {
+    try {
+      if (await call<boolean>("check_librarians_existence")) {
+        const permissionId = (await call<permissao[]>("get_permissions")).find(
+          (permission) => permission.acao === "mudar_configuracoes"
+        )?.id;
+
+        if (jwtStore.get() !== "") {
+          const permissions = await call<permissao[]>(
+            "get_librarian_permissions"
+          );
+
+          settingsPermission = permissions.some(
+            (permission) => permission.id === permissionId
+          );
+        }
+      } else {
+        settingsPermission = true;
+      }
+    } catch (error) {
+      toast.error(error as string);
+    }
+  });
 </script>
 
-<Toaster />
+<Toaster class="z-50" />
 <Button
   on:click={toggleMode}
   variant="outline"
@@ -31,21 +61,19 @@
   <div class="flex flex-row w-full h-full">
     <div class="flex flex-col justify-between items-center py-6 h-full px-2">
       <div>
-        <Button
-          variant="outline"
-          size="icon"
-          on:click={() => goto("/books", { invalidateAll: true })}
-        >
+        <Button variant="outline" size="icon" on:click={() => goto("/books")}>
           <BookCopy class="w-[1.2rem] h-[1.2rem]" />
         </Button>
       </div>
-      <Button
-        variant="outline"
-        size="icon"
-        on:click={() => goto("/settings", { invalidateAll: true })}
-      >
-        <Settings2 class="w-[1.2rem] h-[1.2rem]" />
-      </Button>
+      {#if settingsPermission}
+        <Button
+          variant="outline"
+          size="icon"
+          on:click={() => goto("/settings")}
+        >
+          <Settings2 class="w-[1.2rem] h-[1.2rem]" />
+        </Button>
+      {/if}
     </div>
     <div class="border-l border-muted"></div>
     <div class="flex justify-center items-center w-full h-full p-4">
