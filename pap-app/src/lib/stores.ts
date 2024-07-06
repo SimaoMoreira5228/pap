@@ -71,8 +71,6 @@ function safeParseJSON<T>(json: string | null, fallback: T): T {
   }
 }
 
-const redirectStore = new Store(false);
-
 const dbStringStore = new Store(
   safeParseJSON<string>(localStorage.getItem("dbUrl"), ""),
   true,
@@ -112,4 +110,4 @@ const loanPeriodStore = new Store(
   "loanPeriod"
 );
 
-export { dbStringStore, jwtStore, loanPeriodStore, redirectStore };
+export { dbStringStore, jwtStore, loanPeriodStore };

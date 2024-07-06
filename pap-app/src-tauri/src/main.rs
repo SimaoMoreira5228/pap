@@ -11,6 +11,7 @@ use permissions::{add_permission_to_role, get_permissions};
 use readers::{create_reader, get_reader_by_id, get_readers_by_name};
 use requests::{get_requested_book_by_book_id, request_book, return_book};
 use sqlx::{mysql::MySqlPoolOptions, MySql, Pool};
+use tauri::Manager;
 use tokio::sync::Mutex;
 use tracing_subscriber::FmtSubscriber;
 
@@ -58,6 +59,13 @@ fn main() {
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
     tauri::Builder::default()
+        .setup(|app| {
+            {
+                let window = app.get_window("main").unwrap();
+                window.open_devtools();
+            }
+            Ok(())
+        })
         .manage(Mutex::new(None::<Database>))
         .invoke_handler(tauri::generate_handler![
             // others

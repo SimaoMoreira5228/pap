@@ -8,7 +8,7 @@
   import { call } from "$lib/call";
   import type { permissao } from "$lib/types";
   import { toast } from "svelte-sonner";
-  import { jwtStore, redirectStore, dbStringStore } from "$lib/stores";
+  import { jwtStore, dbStringStore } from "$lib/stores";
   import { writable } from "svelte/store";
 
   if (!localStorage.getItem(localStorageKey)) {
@@ -19,23 +19,31 @@
   let showBar = false;
   let refreshBar = writable(false);
 
-  redirectStore.setCallback((value) => {
-    refreshBar.set(value);
+  afterNavigate(() => {
+    console.log("afterNavigate");
+    refreshBar.set(true);
   });
 
-  refreshBar.subscribe(async (value) => {
-    if (value) {
-      showBar = false;
+  $: if ($refreshBar) {
+    showBar = false;
+
+    (async () => {
       try {
         if (await call<boolean>("check_librarians_existence")) {
-          const permissionId = (
-            await call<permissao[]>("get_permissions")
-          ).find((permission) => permission.acao === "mudar_configuracoes")?.id;
+          const permissions = await call<permissao[]>("get_permissions");
+
+          if (permissions === undefined) return;
+
+          const permissionId = permissions.find(
+            (permission) => permission.acao === "mudar_configuracoes"
+          )?.id;
 
           if (jwtStore.get() !== "") {
             const permissions = await call<permissao[]>(
               "get_librarian_permissions"
             );
+
+            if (permissions === undefined) return;
 
             settingsPermission = permissions.some(
               (permission) => permission.id === permissionId
@@ -50,19 +58,13 @@
         toast.error(error as string);
         if (dbStringStore.get() === "") {
           showBar = false;
-          setTimeout(() => {
-            goto("/setup");
-          }, 1000);
+          goto("/setup");
         }
       } finally {
-        redirectStore.set(false);
+        refreshBar.set(false);
       }
-    }
-  });
-
-  afterNavigate(() => {
-    refreshBar.set(true);
-  });
+    })();
+  }
 </script>
 
 <Toaster class="z-50" />

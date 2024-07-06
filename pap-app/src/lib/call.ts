@@ -1,8 +1,11 @@
 import { invoke } from "@tauri-apps/api";
 import { dbStringStore, jwtStore } from "./stores";
 import { DatabaseConnectionStatus } from "./types";
+import { goto } from "$app/navigation";
 
 export async function call<T>(method: string, args: any = {}): Promise<T> {
+  if (dbStringStore.get() === "") goto("/setup");
+
   if (!args.token) args = { ...args, token: jwtStore.get() };
   while (true) {
     switch (dbStringStore.getProperty<DatabaseConnectionStatus>("status")) {
@@ -12,9 +15,11 @@ export async function call<T>(method: string, args: any = {}): Promise<T> {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         break;
       case DatabaseConnectionStatus.BROKEN:
-        throw new Error("A conexão com a base de dados foi perdida");
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      case DatabaseConnectionStatus.NOT_CONNECTED:
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       default:
-        throw new Error("A conexão com a base de dados não foi estabelecida");
+        await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
 }
