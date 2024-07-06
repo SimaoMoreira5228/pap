@@ -1,38 +1,33 @@
 <script lang="ts">
-  import "../app.css";
-  import { toggleMode, setMode, localStorageKey } from "mode-watcher";
+  import "../../app.css";
   import { Button } from "$lib/components/ui/button";
-  import { Sun, Moon, Settings2, BookCopy } from "lucide-svelte";
-  import { Toaster } from "$lib/components/ui/sonner";
   import { afterNavigate, goto } from "$app/navigation";
   import { call } from "$lib/call";
   import type { permissao } from "$lib/types";
   import { toast } from "svelte-sonner";
-  import { jwtStore, dbStringStore } from "$lib/stores";
+  import { jwtStore } from "$lib/stores";
   import { writable } from "svelte/store";
+  import Icon from "@iconify/svelte";
+  import { Sun, Moon } from "lucide-svelte";
+  import { Toaster } from "svelte-sonner";
+  import { toggleMode, setMode, localStorageKey } from "mode-watcher";
 
   if (!localStorage.getItem(localStorageKey)) {
     setMode("light");
   }
 
   let settingsPermission = false;
-  let showBar = false;
   let refreshBar = writable(false);
 
   afterNavigate(() => {
-    console.log("afterNavigate");
     refreshBar.set(true);
   });
 
   $: if ($refreshBar) {
-    showBar = false;
-
     (async () => {
       try {
         if (await call<boolean>("check_librarians_existence")) {
           const permissions = await call<permissao[]>("get_permissions");
-
-          if (permissions === undefined) return;
 
           const permissionId = permissions.find(
             (permission) => permission.acao === "mudar_configuracoes"
@@ -43,8 +38,6 @@
               "get_librarian_permissions"
             );
 
-            if (permissions === undefined) return;
-
             settingsPermission = permissions.some(
               (permission) => permission.id === permissionId
             );
@@ -52,14 +45,8 @@
         } else {
           settingsPermission = true;
         }
-
-        showBar = true;
       } catch (error) {
         toast.error(error as string);
-        if (dbStringStore.get() === "") {
-          showBar = false;
-          goto("/setup");
-        }
       } finally {
         refreshBar.set(false);
       }
@@ -67,7 +54,6 @@
   }
 </script>
 
-<Toaster class="z-50" />
 <Button
   on:click={toggleMode}
   variant="outline"
@@ -83,27 +69,51 @@
   <span class="sr-only">Mudar o tema</span>
 </Button>
 
-<div class="w-screen h-screen flex justify-start">
+<Toaster class="z-50" />
+
+<div class="flex w-screen h-screen justify-start">
   <div class="flex flex-row w-full h-full">
-    {#if showBar}
-      <div class="flex flex-col justify-between items-center py-6 h-full px-2">
-        <div>
-          <Button variant="outline" size="icon" on:click={() => goto("/books")}>
-            <BookCopy class="w-[1.2rem] h-[1.2rem]" />
-          </Button>
-        </div>
-        {#if settingsPermission}
-          <Button
-            variant="outline"
-            size="icon"
-            on:click={() => goto("/settings")}
-          >
-            <Settings2 class="w-[1.2rem] h-[1.2rem]" />
-          </Button>
-        {/if}
+    <div class="flex flex-col justify-between items-center py-6 h-full px-2">
+      <div class="flex flex-col gap-1">
+        <Button variant="outline" size="icon" on:click={() => goto("/books")}>
+          <Icon
+            icon="material-symbols-light:book-4-outline"
+            class="w-[1.5rem] h-[1.5rem] text-secondary-foreground"
+          />
+        </Button>
+        <Button variant="outline" size="icon" on:click={() => goto("/authors")}>
+          <Icon
+            icon="guidance:office"
+            class="w-[1.5rem] h-[1.5rem] text-secondary-foreground"
+          />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          on:click={() => goto("/publishers")}
+        >
+          <Icon
+            icon="ph:factory-thin"
+            class="w-[1.5rem] h-[1.5rem] text-secondary-foreground"
+          />
+        </Button>
       </div>
-      <div class="border-l border-muted"></div>
-    {/if}
+      {#if settingsPermission}
+        <Button
+          variant="outline"
+          size="icon"
+          on:click={() => goto("/settings")}
+        >
+          <Icon
+            icon="carbon:settings-adjust"
+            class="w-[1.5rem] h-[1.5rem] text-secondary-foreground"
+          />
+        </Button>
+      {/if}
+    </div>
+
+    <div class="border-l border-muted"></div>
+
     <div class="flex justify-center items-center w-full h-full p-4">
       <slot />
     </div>

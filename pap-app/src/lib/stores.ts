@@ -72,7 +72,7 @@ function safeParseJSON<T>(json: string | null, fallback: T): T {
 }
 
 const dbStringStore = new Store(
-  safeParseJSON<string>(localStorage.getItem("dbUrl"), ""),
+  safeParseJSON<{dbUrl: string, makeTables?: boolean}>(localStorage.getItem("dbUrl"), {dbUrl: "", makeTables: false}),
   true,
   "dbUrl",
   () => {},
@@ -82,7 +82,7 @@ const dbStringStore = new Store(
 );
 
 dbStringStore.setCallback(async (value) => {
-  if (value === "") {
+  if (value.dbUrl === "") {
     toast.info("A string de conexão da base de dados está vazia");
     return;
   }
@@ -91,7 +91,8 @@ dbStringStore.setCallback(async (value) => {
 
   try {
     await invoke("init", {
-      dbUrl: value,
+      dbUrl: value.dbUrl,
+      makeTables: value.makeTables,
     });
 
     toast.success("Connectado com sucesso à base de dados");

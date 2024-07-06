@@ -9,7 +9,7 @@
   import { onMount } from "svelte";
   import { toast } from "svelte-sonner";
 
-  let dbUrl = dbStringStore.get();
+  let dbUrl = dbStringStore.get().dbUrl;
   let loanPeriod = loanPeriodStore.get();
 
   onMount(async () => {
@@ -28,7 +28,7 @@
           );
 
           if (!has_permission) {
-            return goto("/");
+            return goto("/login");
           }
         }
       }

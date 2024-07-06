@@ -23,7 +23,7 @@ pub struct Categoria {
     pub nome: String,
 }
 
-#[derive(Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Editora {
     pub id: i32,
     pub nome: String,

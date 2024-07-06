@@ -9,6 +9,20 @@ const config = {
   preprocess: vitePreprocess(),
   kit: {
     adapter: adapter(),
+    prerender: {
+      entries: [
+        "/",
+        "/authors",
+        "/authors/1",
+        "/books/1",
+        "/publishers/1",
+        "/books",
+        "/publishers",
+        "/settings",
+        "/login",
+        "/setup",
+      ],
+    },
   },
 };
 

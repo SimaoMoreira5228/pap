@@ -1,16 +1,17 @@
 use tokio::sync::Mutex;
 
 use crate::{
-    db_structs::{Autor, Livro, LivroAsResponse},
+    db_structs::{Editora, Livro, LivroAsResponse},
     jwt::verify_jwt,
     Database,
 };
 
 #[tauri::command]
-pub async fn get_author_by_id(
+pub async fn get_publisher_by_id(
+    token: String,
     id: i32,
     state: tauri::State<'_, Mutex<Option<Database>>>,
-) -> Result<Autor, String> {
+) -> Result<Editora, String> {
     let state_lock = state.lock().await;
     let db = state_lock
         .as_ref()
@@ -18,7 +19,12 @@ pub async fn get_author_by_id(
 
     let pool = &db.pool;
 
-    let author = sqlx::query_as::<_, Autor>("SELECT * FROM autores WHERE id = ?")
+    verify_jwt(&token, &pool).await.map_err(|e| {
+        tracing::error!("Falha ao verificar token: {}", e);
+        format!("Falha ao verificar token: {}", e)
+    })?;
+
+    let publisher = sqlx::query_as::<_, Editora>("SELECT * FROM editoras WHERE id = ?")
         .bind(id)
         .fetch_all(pool)
         .await
@@ -27,15 +33,16 @@ pub async fn get_author_by_id(
             format!("Falha ao consultar: {}", e)
         })?;
 
-    if author.is_empty() {
-        return Err("Autor não encontrado".to_string());
+    if publisher.is_empty() {
+        return Err("Editora não encontrada".to_string());
     }
 
-    Ok(author[0].clone())
+    Ok(publisher[0].clone())
 }
 
 #[tauri::command]
-pub async fn get_books_by_author_id(
+pub async fn get_books_by_publisher_id(
+    token: String,
     id: i32,
     state: tauri::State<'_, Mutex<Option<Database>>>,
 ) -> Result<Vec<LivroAsResponse>, String> {
@@ -46,7 +53,12 @@ pub async fn get_books_by_author_id(
 
     let pool = &db.pool;
 
-    let books = sqlx::query_as::<_, Livro>("SELECT * FROM livros WHERE id_autor = ?")
+    verify_jwt(&token, &pool).await.map_err(|e| {
+        tracing::error!("Falha ao verificar token: {}", e);
+        format!("Falha ao verificar token: {}", e)
+    })?;
+
+    let books = sqlx::query_as::<_, Livro>("SELECT * FROM livros WHERE id_editora = ?")
         .bind(id)
         .fetch_all(pool)
         .await
@@ -130,13 +142,13 @@ pub async fn get_books_by_author_id(
 }
 
 #[tauri::command]
-pub async fn get_authors(
+pub async fn get_publishers(
     token: String,
     limit: i32,
     offset: i32,
     search: Option<String>,
     state: tauri::State<'_, Mutex<Option<Database>>>,
-) -> Result<Vec<Autor>, String> {
+) -> Result<Vec<Editora>, String> {
     let state_lock = state.lock().await;
     let db = state_lock
         .as_ref()
@@ -149,10 +161,10 @@ pub async fn get_authors(
         format!("Falha ao verificar token: {}", e)
     })?;
 
-    let authors;
+    let publishers;
 
     if search.is_none() {
-        authors = sqlx::query_as::<_, Autor>("SELECT * FROM autores LIMIT ? OFFSET ?")
+        publishers = sqlx::query_as::<_, Editora>("SELECT * FROM editoras LIMIT ? OFFSET ?")
             .bind(limit)
             .bind(offset)
             .fetch_all(pool)
@@ -162,8 +174,8 @@ pub async fn get_authors(
                 format!("Falha ao consultar autores: {}", e)
             })?;
     } else {
-        authors = sqlx::query_as::<_, Autor>(
-            "SELECT * FROM autores WHERE LOWER(nome) LIKE LOWER(?) LIMIT ? OFFSET ?",
+        publishers = sqlx::query_as::<_, Editora>(
+            "SELECT * FROM editoras WHERE LOWER(nome) LIKE LOWER(?) LIMIT ? OFFSET ?",
         )
         .bind(format!("%{}%", search.unwrap().to_lowercase()))
         .bind(limit)
@@ -176,11 +188,11 @@ pub async fn get_authors(
         })?;
     }
 
-    Ok(authors)
+    Ok(publishers)
 }
 
 #[tauri::command]
-pub async fn get_authors_count(
+pub async fn get_publishers_count(
     token: String,
     search: Option<String>,
     state: tauri::State<'_, Mutex<Option<Database>>>,
@@ -200,7 +212,7 @@ pub async fn get_authors_count(
     let count: i32;
 
     if search.is_none() {
-        count = sqlx::query_scalar("SELECT COUNT(*) FROM autores")
+        count = sqlx::query_scalar("SELECT COUNT(*) FROM editoras")
             .fetch_one(pool)
             .await
             .map_err(|e| {
@@ -208,7 +220,7 @@ pub async fn get_authors_count(
                 format!("Falha ao consultar autores: {}", e)
             })?;
     } else {
-        count = sqlx::query_scalar("SELECT COUNT(*) FROM autores WHERE LOWER(nome) LIKE LOWER(?)")
+        count = sqlx::query_scalar("SELECT COUNT(*) FROM editoras WHERE LOWER(nome) LIKE LOWER(?)")
             .bind(format!("%{}%", search.unwrap().to_lowercase()))
             .fetch_one(pool)
             .await

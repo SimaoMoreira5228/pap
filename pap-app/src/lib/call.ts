@@ -4,7 +4,8 @@ import { DatabaseConnectionStatus } from "./types";
 import { goto } from "$app/navigation";
 
 export async function call<T>(method: string, args: any = {}): Promise<T> {
-  if (dbStringStore.get() === "") goto("/setup");
+  let sendSetup = false;
+  if (dbStringStore.get().dbUrl === "") goto("/setup");
 
   if (!args.token) args = { ...args, token: jwtStore.get() };
   while (true) {
@@ -15,6 +16,10 @@ export async function call<T>(method: string, args: any = {}): Promise<T> {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         break;
       case DatabaseConnectionStatus.BROKEN:
+        if (!sendSetup) {
+          goto("/setup");
+          sendSetup = true;
+        }
         await new Promise((resolve) => setTimeout(resolve, 1000));
       case DatabaseConnectionStatus.NOT_CONNECTED:
         await new Promise((resolve) => setTimeout(resolve, 1000));

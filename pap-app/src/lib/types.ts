@@ -45,6 +45,15 @@ export interface Requisicao {
   data_entrega?: string;
 }
 
+export interface Editora {
+  id: number;
+  nome: string;
+  morada?: string;
+  codigo_postal?: string;
+  telefone?: string;
+  email?: string;
+}
+
 export enum DatabaseConnectionStatus {
   NOT_CONNECTED,
   CONNECTING,

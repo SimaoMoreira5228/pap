@@ -1,28 +1,34 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use authors::{get_author_by_id, get_books_by_author_id};
-use books::{get_book_by_id, get_books, get_books_count};
-use librarians::{
-    check_librarians_existence, does_librarian_has_permission, get_librarian_permissions, login,
-    new_librarian,
-};
-use permissions::{add_permission_to_role, get_permissions};
-use readers::{create_reader, get_reader_by_id, get_readers_by_name};
-use requests::{get_requested_book_by_book_id, request_book, return_book};
-use sqlx::{mysql::MySqlPoolOptions, MySql, Pool};
-use tauri::Manager;
-use tokio::sync::Mutex;
-use tracing_subscriber::FmtSubscriber;
-
 mod authors;
 mod books;
 mod db_structs;
 mod jwt;
 mod librarians;
 mod permissions;
+mod publishers;
 mod readers;
 mod requests;
+mod tables;
+
+use authors::{get_author_by_id, get_authors, get_authors_count, get_books_by_author_id};
+use books::{get_book_by_id, get_books, get_books_count};
+use librarians::{
+    check_librarians_existence, does_librarian_has_permission, get_librarian_permissions, login,
+    new_librarian,
+};
+use permissions::{add_permission_to_role, get_permissions};
+use publishers::{
+    get_books_by_publisher_id, get_publisher_by_id, get_publishers, get_publishers_count,
+};
+use readers::{create_reader, get_reader_by_id, get_readers_by_name};
+use requests::{get_requested_book_by_book_id, request_book, return_book};
+use sqlx::{mysql::MySqlPoolOptions, MySql, Pool};
+use tables::create_tables;
+use tauri::Manager;
+use tokio::sync::Mutex;
+use tracing_subscriber::FmtSubscriber;
 
 pub struct Database {
     pub pool: Pool<MySql>,
@@ -35,17 +41,59 @@ lazy_static::lazy_static! {
 #[tauri::command]
 async fn init(
     db_url: String,
+    make_tables: Option<bool>,
     state: tauri::State<'_, Mutex<Option<Database>>>,
 ) -> Result<(), String> {
-    let pool = MySqlPoolOptions::new()
-        .max_connections(5)
-        .connect(db_url.as_ref())
-        .await
-        .map_err(|e| {
-            tracing::error!("Falha ao criar pool: {}", e);
-            format!("Falha ao criar pool: {}", e)
+    if make_tables.unwrap_or(false) {
+        let db_name = db_url.split('/').last().unwrap();
+        let no_name_db_url = db_url.replace(db_name, "");
+
+        let no_db_pool = MySqlPoolOptions::new()
+            .max_connections(5)
+            .connect(no_name_db_url.as_ref())
+            .await
+            .map_err(|e| {
+                tracing::error!("Falha ao criar pool: {}", e);
+                format!("Falha ao criar pool: {}", e)
+            })?;
+
+        let query = format!("CREATE DATABASE IF NOT EXISTS `{}`", db_name);
+
+        sqlx::query(&query)
+            .execute(&no_db_pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Falha ao criar base de dados: {}", e);
+                format!("Falha ao criar base de dados: {}", e)
+            })?;
+
+        let pool = MySqlPoolOptions::new()
+            .max_connections(5)
+            .connect(db_url.as_ref())
+            .await
+            .map_err(|e| {
+                tracing::error!("Falha ao criar pool: {}", e);
+                format!("Falha ao criar pool: {}", e)
+            })?;
+
+        *state.lock().await = Some(Database { pool: pool.clone() });
+
+        create_tables(&pool).await.map_err(|e| {
+            format!("Falha ao criar tabelas: {}", e)
         })?;
-    *state.lock().await = Some(Database { pool });
+    } else {
+        let pool = MySqlPoolOptions::new()
+            .max_connections(5)
+            .connect(db_url.as_ref())
+            .await
+            .map_err(|e| {
+                tracing::error!("Falha ao criar pool: {}", e);
+                format!("Falha ao criar pool: {}", e)
+            })?;
+
+        *state.lock().await = Some(Database { pool });
+    }
+
     tracing::debug!("Pool criado com sucesso");
 
     Ok(())
@@ -60,6 +108,7 @@ fn main() {
 
     tauri::Builder::default()
         .setup(|app| {
+            #[cfg(debug_assertions)]
             {
                 let window = app.get_window("main").unwrap();
                 window.open_devtools();
@@ -93,7 +142,14 @@ fn main() {
             create_reader,
             // authors
             get_author_by_id,
-            get_books_by_author_id
+            get_books_by_author_id,
+            get_authors,
+            get_authors_count,
+            // publishers
+            get_publisher_by_id,
+            get_books_by_publisher_id,
+            get_publishers,
+            get_publishers_count
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

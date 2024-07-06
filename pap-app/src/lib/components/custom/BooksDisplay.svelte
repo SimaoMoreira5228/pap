@@ -25,6 +25,7 @@
               <a href={`/authors/${book.autor_id}`}>
                 <P class="text-muted-foreground">{book.autor}</P>
               </a>
+              <!-- Todo: add book publisher -->
               <P class="text-xs line-clamp-2">
                 {book.resumo}
               </P>

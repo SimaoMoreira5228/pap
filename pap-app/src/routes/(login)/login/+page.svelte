@@ -43,11 +43,14 @@
       const token = await call<string>("login", { name, password });
 
       jwtStore.set(token);
+
+      while (jwtStore.get() === "")
+        await new Promise((r) => setTimeout(r, 100));
+      goto("/books");
     } catch (error) {
       toast.error(error as string);
     } finally {
       isLoading.set(false);
-      goto("/books");
     }
   }
 
