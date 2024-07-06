@@ -184,6 +184,52 @@ pub async fn does_librarian_has_permission(
 }
 
 #[tauri::command]
+pub async fn does_librarian_has_permission_by_acao(
+    token: String,
+    acao: String,
+    state: tauri::State<'_, Mutex<Option<Database>>>,
+) -> Result<bool, String> {
+    let state_lock = state.lock().await;
+    let db = state_lock
+        .as_ref()
+        .ok_or("Base de dados não inicializada")?;
+
+    let pool = &db.pool;
+
+    verify_jwt(&token, &pool).await.map_err(|e| {
+        tracing::error!("Falha ao verificar token: {}", e);
+        format!("Falha ao verificar token: {}", e)
+    })?;
+
+    let claims = get_from_jwt(&token).map_err(|e| {
+        tracing::error!("Falha ao obter claims: {}", e);
+        format!("Falha ao obter claims: {}", e)
+    })?;
+
+    let permission_id: i32 = sqlx::query_scalar("SELECT id FROM permissoes WHERE acao = ?")
+        .bind(acao)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Falha ao consultar: {}", e);
+            format!("Falha ao consultar: {}", e)
+        })?;
+
+    let count: i32 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM cargos WHERE nome = ? AND permissao = ?")
+            .bind(claims.get("role").unwrap())
+            .bind(permission_id)
+            .fetch_one(pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Falha ao consultar: {}", e);
+                format!("Falha ao consultar: {}", e)
+            })?;
+
+    Ok(count > 0)
+}
+
+#[tauri::command]
 pub async fn get_librarian_permissions(
     token: String,
     state: tauri::State<'_, Mutex<Option<Database>>>,

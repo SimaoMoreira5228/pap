@@ -15,15 +15,11 @@
   onMount(async () => {
     try {
       if (await call<boolean>("check_librarians_existence")) {
-        const permissionId = (await call<permissao[]>("get_permissions")).find(
-          (permission) => permission.acao === "mudar_configuracoes"
-        )?.id;
-
         if (jwtStore.get() !== "") {
           const has_permission = await call<boolean>(
-            "does_librarian_has_permission",
+            "does_librarian_has_permission_by_acao",
             {
-              permissionId,
+              acao: "mudar_configuracoes",
             }
           );
 

@@ -23,24 +23,18 @@
     refreshBar.set(true);
   });
 
+  async function hasPermission(acao: string) {
+    return await call<boolean>("does_librarian_has_permission_by_acao", {
+        acao,
+      });
+  }
+
   $: if ($refreshBar) {
     (async () => {
       try {
         if (await call<boolean>("check_librarians_existence")) {
-          const permissions = await call<permissao[]>("get_permissions");
-
-          const permissionId = permissions.find(
-            (permission) => permission.acao === "mudar_configuracoes"
-          )?.id;
-
           if (jwtStore.get() !== "") {
-            const permissions = await call<permissao[]>(
-              "get_librarian_permissions"
-            );
-
-            settingsPermission = permissions.some(
-              (permission) => permission.id === permissionId
-            );
+            settingsPermission = hasPermission("mudar_configuracoes");
           }
         } else {
           settingsPermission = true;

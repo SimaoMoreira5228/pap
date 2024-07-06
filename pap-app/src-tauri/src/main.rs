@@ -15,8 +15,8 @@ mod tables;
 use authors::{get_author_by_id, get_authors, get_authors_count, get_books_by_author_id};
 use books::{get_book_by_id, get_books, get_books_count};
 use librarians::{
-    check_librarians_existence, does_librarian_has_permission, get_librarian_permissions, login,
-    new_librarian,
+    check_librarians_existence, does_librarian_has_permission,
+    does_librarian_has_permission_by_acao, get_librarian_permissions, login, new_librarian,
 };
 use permissions::{add_permission_to_role, get_permissions};
 use publishers::{
@@ -78,9 +78,9 @@ async fn init(
 
         *state.lock().await = Some(Database { pool: pool.clone() });
 
-        create_tables(&pool).await.map_err(|e| {
-            format!("Falha ao criar tabelas: {}", e)
-        })?;
+        create_tables(&pool)
+            .await
+            .map_err(|e| format!("Falha ao criar tabelas: {}", e))?;
     } else {
         let pool = MySqlPoolOptions::new()
             .max_connections(5)
@@ -132,6 +132,7 @@ fn main() {
             new_librarian,
             check_librarians_existence,
             get_librarian_permissions,
+            does_librarian_has_permission_by_acao,
             // permissions
             does_librarian_has_permission,
             get_permissions,
