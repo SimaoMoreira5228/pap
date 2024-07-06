@@ -1,18 +1,21 @@
 import { invoke } from "@tauri-apps/api";
 import { toast } from "svelte-sonner";
 import { writable, type Writable } from "svelte/store";
+import { DatabaseConnectionStatus } from "./types";
 
-class Store<T> {
+export class Store<T> {
   private value: T;
   private useLocalStorage = false;
   private name: string;
   private store: Writable<T>;
+  private properties: Record<string, any>;
 
   constructor(
     value: T,
     useLocalStorage: boolean = false,
     name: string = "",
-    callback?: (value: T) => void
+    callback?: (value: T) => void,
+    properties: Record<string, any> = {}
   ) {
     this.value = value;
     this.useLocalStorage = useLocalStorage;
@@ -27,6 +30,8 @@ class Store<T> {
     if (callback) {
       this.store.subscribe(callback);
     }
+
+    this.properties = properties;
   }
 
   set(value: T) {
@@ -36,6 +41,8 @@ class Store<T> {
     if (this.useLocalStorage) {
       localStorage.setItem(this.name, JSON.stringify(value));
     }
+
+    return this.value;
   }
 
   get() {
@@ -44,6 +51,14 @@ class Store<T> {
 
   setCallback(callback: (value: T) => void) {
     this.store.subscribe(callback);
+  }
+
+  setProperty(property: string, value: any) {
+    this.properties[property] = value;
+  }
+
+  getProperty<T>(property: string): T {
+    return this.properties[property];
   }
 }
 
@@ -62,23 +77,32 @@ const dbStringStore = new Store(
   safeParseJSON<string>(localStorage.getItem("dbUrl"), ""),
   true,
   "dbUrl",
-  async (value) => {
-    if (value === "") {
-      toast.info("A string de conexão da base de dados está vazia");
-      return;
-    }
-
-    try {
-      await invoke("init", {
-        dbUrl: value,
-      });
-
-      toast.success("Connectado com sucesso à base de dados");
-    } catch (error) {
-      toast.error("Erro ao conectar à base de dados");
-    }
+  () => {},
+  {
+    status: DatabaseConnectionStatus.NOT_CONNECTED,
   }
 );
+
+dbStringStore.setCallback(async (value) => {
+  if (value === "") {
+    toast.info("A string de conexão da base de dados está vazia");
+    return;
+  }
+
+  dbStringStore.setProperty("status", DatabaseConnectionStatus.CONNECTING);
+
+  try {
+    await invoke("init", {
+      dbUrl: value,
+    });
+
+    toast.success("Connectado com sucesso à base de dados");
+    dbStringStore.setProperty("status", DatabaseConnectionStatus.CONNECTED);
+  } catch (error) {
+    toast.error("Erro ao conectar à base de dados");
+    dbStringStore.setProperty("status", DatabaseConnectionStatus.BROKEN);
+  }
+});
 
 const jwtStore = new Store("");
 

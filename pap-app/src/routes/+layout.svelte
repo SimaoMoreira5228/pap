@@ -8,7 +8,7 @@
   import { call } from "$lib/call";
   import type { permissao } from "$lib/types";
   import { toast } from "svelte-sonner";
-  import { jwtStore, redirectStore } from "$lib/stores";
+  import { jwtStore, redirectStore, dbStringStore } from "$lib/stores";
   import { writable } from "svelte/store";
 
   if (!localStorage.getItem(localStorageKey)) {
@@ -48,10 +48,14 @@
         showBar = true;
       } catch (error) {
         toast.error(error as string);
-        if (error === "Base de dados não inicializada") {
-          goto("/setup");
+        if (dbStringStore.get() === "") {
           showBar = false;
+          setTimeout(() => {
+            goto("/setup");
+          }, 1000);
         }
+      } finally {
+        redirectStore.set(false);
       }
     }
   });

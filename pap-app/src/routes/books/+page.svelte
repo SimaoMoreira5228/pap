@@ -6,60 +6,85 @@
   import Icon from "@iconify/svelte";
   import { Button } from "$lib/components/ui/button";
   import { toast } from "svelte-sonner";
-  import { writable } from "svelte/store";
+  import { get, writable } from "svelte/store";
   import { call } from "$lib/call";
   import { jwtStore } from "$lib/stores";
   import BooksDisplay from "$lib/components/custom/BooksDisplay.svelte";
+  import SearchBar from "$lib/components/custom/SearchBar.svelte";
 
   let books: Livro[] = [];
   let booksPerPage = 12;
-  let bookPagesCount = 0;
-  let currentPage = 0;
+  $: totalBooks = 0;
+  let currentPageStore = writable(0);
+  let bookSearch = writable<string | null>(null);
   const isLoading = writable(false);
 
-  onMount(async () => {
+  $: pages = getPages($currentPageStore, totalBooks);
+
+  function getPages(current: number, total: number) {
+    let firstPage = 0;
+    let lastPage = total;
+
+    let backPages = Array.from({ length: 3 })
+      .map((_, i) => current - i - 1)
+      .reverse();
+    let frontPages = Array.from({ length: 3 }).map((_, i) => current + i + 1);
+
+    return { firstPage, lastPage, backPages, frontPages };
+  }
+
+  async function getBooks($currentPageStore: number, search: string | null) {
     if (jwtStore.get() === "") return;
+
+    if (search === "") {
+      bookSearch.set(null);
+    } else {
+      bookSearch.set(search);
+    }
 
     try {
       isLoading.set(true);
+
       books = await call<Livro[]>("get_books", {
         limit: booksPerPage,
-        offset: 0,
+        offset: $currentPageStore * 10,
+        search,
       });
-      bookPagesCount = (await call<number>("get_books_count")) / booksPerPage;
+
+      totalBooks = Math.ceil(
+        (await call<number>("get_books_count", { search })) / booksPerPage
+      );
     } catch (error) {
       console.error(error);
       toast.error("Falha ao carregar livros");
     } finally {
       isLoading.set(false);
     }
+  }
+
+  onMount(async () => {
+    getBooks($currentPageStore, $bookSearch);
   });
 
-  $: {
-    if (currentPage < 0) {
-      currentPage = 0;
-    } else {
-      (async () => {
-        if (jwtStore.get() === "") return;
-
-        try {
-          isLoading.set(true);
-          books = await call<Livro[]>("get_books", {
-            limit: booksPerPage,
-            offset: currentPage * 10,
-          });
-        } catch (error) {
-          toast.error("Falha ao carregar livros");
-        } finally {
-          isLoading.set(false);
-        }
-      })();
+  currentPageStore.subscribe((value) => {
+    if (value < 0) {
+      currentPageStore.set(0);
+    } else if (value >= totalBooks) {
+      currentPageStore.set(totalBooks - 1);
     }
-  }
+
+    getBooks(value, $bookSearch);
+  });
 </script>
 
 <div class="w-full h-full flex flex-col justify-start">
   <H2 class="w-[15%]">Livros</H2>
+  <div class="w-full flex items-center justify-center py-4">
+    <SearchBar
+      searchFunction={(value) => getBooks($currentPageStore, value)}
+      class="!w-[90%]"
+    />
+  </div>
   <div class="w-full h-full flex flex-col justify-between overflow-auto">
     {#if $isLoading}
       <div class="flex justify-center items-center w-full h-full">
@@ -72,18 +97,27 @@
       <BooksDisplay {books} />
     {/if}
     <div class="flex justify-evenly items-center w-full pt-2">
-      <Button on:click={() => (currentPage -= 1)} size="icon" variant="outline">
+      <Button
+        on:click={() => ($currentPageStore -= 1)}
+        size="icon"
+        variant="outline"
+      >
         <ChevronLeft class="w-[1.2rem] h-[1.2rem]" />
       </Button>
       <div class="flex flex-row gap-12">
         <div>
-          {#if currentPage + 1 > 1}
-            {#each Array.from({ length: 3 })
-              .map((_, i) => currentPage - i - 1)
-              .reverse() as page}
+          {#if $currentPageStore - 1 >= 0}
+            <Button
+              on:click={() => ($currentPageStore = pages.firstPage)}
+              variant="outline"
+              size="icon"
+            >
+              {pages.firstPage}
+            </Button>
+            {#each pages.backPages as page}
               {#if page >= 0}
                 <Button
-                  on:click={() => (currentPage = Number(page))}
+                  on:click={() => ($currentPageStore = Number(page))}
                   variant="outline"
                   size="icon"
                 >
@@ -93,13 +127,13 @@
             {/each}
           {/if}
         </div>
-        <Button size="icon" variant="outline">{currentPage + 1}</Button>
+        <Button size="icon" variant="outline">{$currentPageStore + 1}</Button>
         <div>
-          {#if currentPage + 1 < bookPagesCount}
-            {#each Array.from( { length: 3 } ).map((_, i) => currentPage + i + 1) as page}
-              {#if page < bookPagesCount}
+          {#if $currentPageStore + 1 < pages.lastPage}
+            {#each pages.frontPages as page}
+              {#if page < pages.lastPage}
                 <Button
-                  on:click={() => (currentPage = Number(page))}
+                  on:click={() => ($currentPageStore = Number(page))}
                   variant="outline"
                   size="icon"
                 >
@@ -107,10 +141,21 @@
                 </Button>
               {/if}
             {/each}
+            <Button
+              on:click={() => ($currentPageStore = pages.lastPage)}
+              variant="outline"
+              size="icon"
+            >
+              {pages.lastPage}
+            </Button>
           {/if}
         </div>
       </div>
-      <Button on:click={() => (currentPage += 1)} size="icon" variant="outline">
+      <Button
+        on:click={() => ($currentPageStore += 1)}
+        size="icon"
+        variant="outline"
+      >
         <ChevronRight class="w-[1.2rem] h-[1.2rem]" />
       </Button>
     </div>

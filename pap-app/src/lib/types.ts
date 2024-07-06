@@ -44,3 +44,10 @@ export interface Requisicao {
   data_requisicao: string;
   data_entrega?: string;
 }
+
+export enum DatabaseConnectionStatus {
+  NOT_CONNECTED,
+  CONNECTING,
+  CONNECTED,
+  BROKEN,
+}

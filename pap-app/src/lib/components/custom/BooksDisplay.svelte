@@ -3,8 +3,6 @@
   import { H3, P } from "$lib/components/ui/typography";
   import type { Livro } from "$lib/types";
   export let books: Livro[] = [];
-
-  console.log(books);
 </script>
 
 <div class="py-6 px-4 sm:px-6 lg:px-8 overflow-auto">

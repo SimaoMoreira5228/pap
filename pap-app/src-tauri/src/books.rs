@@ -1,12 +1,17 @@
 use tokio::sync::Mutex;
 
-use crate::{db_structs::{Livro, LivroAsResponse}, jwt::verify_jwt, Database};
+use crate::{
+    db_structs::{Livro, LivroAsResponse},
+    jwt::verify_jwt,
+    Database,
+};
 
 #[tauri::command]
 pub async fn get_books(
     token: String,
     limit: i32,
     offset: i32,
+    search: Option<String>,
     state: tauri::State<'_, Mutex<Option<Database>>>,
 ) -> Result<Vec<LivroAsResponse>, String> {
     let state_lock = state.lock().await;
@@ -21,7 +26,23 @@ pub async fn get_books(
         format!("Falha ao verificar token: {}", e)
     })?;
 
-    let books = sqlx::query_as::<_, Livro>("SELECT * FROM livros LIMIT ? OFFSET ?")
+    let books;
+
+    if search.is_none() {
+        books = sqlx::query_as::<_, Livro>("SELECT * FROM livros LIMIT ? OFFSET ?")
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Falha ao consultar livros: {}", e);
+                format!("Falha ao consultar livros: {}", e)
+            })?;
+    } else {
+        books = sqlx::query_as::<_, Livro>(
+            "SELECT * FROM livros WHERE LOWER(nome) LIKE LOWER(?) LIMIT ? OFFSET ?",
+        )
+        .bind(format!("%{}%", search.unwrap().to_lowercase()))
         .bind(limit)
         .bind(offset)
         .fetch_all(pool)
@@ -30,6 +51,7 @@ pub async fn get_books(
             tracing::error!("Falha ao consultar livros: {}", e);
             format!("Falha ao consultar livros: {}", e)
         })?;
+    }
 
     let mut books_as_response = Vec::new();
 
@@ -209,6 +231,7 @@ pub async fn get_book_by_id(
 #[tauri::command]
 pub async fn get_books_count(
     token: String,
+    search: Option<String>,
     state: tauri::State<'_, Mutex<Option<Database>>>,
 ) -> Result<i32, String> {
     let state_lock = state.lock().await;
@@ -223,13 +246,26 @@ pub async fn get_books_count(
         format!("Falha ao verificar token: {}", e)
     })?;
 
-    let count: i32 = sqlx::query_scalar("SELECT COUNT(*) FROM livros")
-        .fetch_one(pool)
-        .await
-        .map_err(|e| {
-            tracing::error!("Falha ao consultar livros: {}", e);
-            format!("Falha ao consultar livros: {}", e)
-        })?;
+    let count: i32;
+
+    if search.is_none() {
+        count = sqlx::query_scalar("SELECT COUNT(*) FROM livros")
+            .fetch_one(pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Falha ao consultar livros: {}", e);
+                format!("Falha ao consultar livros: {}", e)
+            })?;
+    } else {
+        count = sqlx::query_scalar("SELECT COUNT(*) FROM livros WHERE LOWER(nome) LIKE LOWER(?)")
+            .bind(format!("%{}%", search.unwrap().to_lowercase()))
+            .fetch_one(pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Falha ao consultar livros: {}", e);
+                format!("Falha ao consultar livros: {}", e)
+            })?;
+    }
 
     Ok(count)
 }
