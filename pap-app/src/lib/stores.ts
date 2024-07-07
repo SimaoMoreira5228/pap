@@ -72,7 +72,10 @@ function safeParseJSON<T>(json: string | null, fallback: T): T {
 }
 
 const dbStringStore = new Store(
-  safeParseJSON<{dbUrl: string, makeTables?: boolean}>(localStorage.getItem("dbUrl"), {dbUrl: "", makeTables: false}),
+  safeParseJSON<{ dbUrl: string; makeTables?: boolean }>(
+    localStorage.getItem("dbUrl"),
+    { dbUrl: "", makeTables: false }
+  ),
   true,
   "dbUrl",
   () => {},
@@ -98,7 +101,7 @@ dbStringStore.setCallback(async (value) => {
     toast.success("Connectado com sucesso à base de dados");
     dbStringStore.setProperty("status", DatabaseConnectionStatus.CONNECTED);
   } catch (error) {
-    toast.error("Erro ao conectar à base de dados");
+    toast.error("Erro ao conectar à base de dados" + error);
     dbStringStore.setProperty("status", DatabaseConnectionStatus.BROKEN);
   }
 });
