@@ -1,12 +1,13 @@
 <script lang="ts">
   import { call } from "$lib/call";
   import NewPublisherDialog from "$lib/components/custom/NewPublisherDialog.svelte";
+  import NewReaderDialog from "$lib/components/custom/NewReaderDialog.svelte";
   import SearchBar from "$lib/components/custom/SearchBar.svelte";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import { H2, H3, P } from "$lib/components/ui/typography";
   import { jwtStore } from "$lib/stores";
-  import type { Editora } from "$lib/types";
+  import type { Leitor } from "$lib/types";
   import { hasPermission } from "$lib/utils";
   import Icon from "@iconify/svelte";
   import { ChevronLeft, ChevronRight } from "lucide-svelte";
@@ -14,14 +15,14 @@
   import { toast } from "svelte-sonner";
   import { writable } from "svelte/store";
 
-  let publishers: Editora[] = [];
-  let publishersPerPage = 18;
+  let readers: Leitor[] = [];
+  let readersPerPage = 18;
   $: totalPublishers = 0;
   let currentPageStore = writable(0);
-  let publishersSearch = writable<string | null>(null);
+  let readersSearch = writable<string | null>(null);
   const isLoading = writable(false);
 
-  let hasCreatePublisherPermission = false;
+  let hasCreateReadersPermission = false;
 
   $: pages = getPages($currentPageStore, totalPublishers);
 
@@ -37,29 +38,26 @@
     return { firstPage, lastPage, backPages, frontPages };
   }
 
-  async function getPublishers(
-    $currentPageStore: number,
-    search: string | null
-  ) {
+  async function getReaders($currentPageStore: number, search: string | null) {
     if (jwtStore.get() === "") return;
 
     if (search === "") {
-      publishersSearch.set(null);
+      readersSearch.set(null);
     } else {
-      publishersSearch.set(search);
+      readersSearch.set(search);
     }
 
     try {
       isLoading.set(true);
 
-      publishers = await call("get_publishers", {
-        limit: publishersPerPage,
+      readers = await call("get_readers", {
+        limit: readersPerPage,
         offset: $currentPageStore * 10,
         search,
       });
 
       totalPublishers = Math.ceil(
-        (await call<number>("get_publishers_count", { search })) / publishersPerPage
+        (await call<number>("get_readers_count", { search })) / readersPerPage
       );
     } catch (error) {
       console.error(error);
@@ -70,9 +68,9 @@
   }
 
   onMount(async () => {
-    getPublishers($currentPageStore, $publishersSearch);
+    getReaders($currentPageStore, $readersSearch);
 
-    hasCreatePublisherPermission = await hasPermission("criar_editora");
+    hasCreateReadersPermission = await hasPermission("criar_leitor");
   });
 
   currentPageStore.subscribe((value) => {
@@ -82,23 +80,23 @@
       currentPageStore.set(totalPublishers - 1);
     }
 
-    getPublishers(value, $publishersSearch);
+    getReaders(value, $readersSearch);
   });
 </script>
 
 <div class="w-full h-full flex flex-col justify-start">
-  <H2 class="w-[15%]">Editoras</H2>
+  <H2 class="w-[15%]">Leitores</H2>
   <div class="w-full flex items-center justify-center py-4 gap-1">
     <SearchBar
-      searchFunction={(value) => getPublishers($currentPageStore, value)}
+      searchFunction={(value) => getReaders($currentPageStore, value)}
       class="!w-[90%]"
     />
-    {#if hasCreatePublisherPermission}
-      <NewPublisherDialog
-        updatePublishers={async () => {
+    {#if hasCreateReadersPermission}
+      <NewReaderDialog
+        updateReaders={async () => {
           currentPageStore.set(0);
-          publishersSearch.set(null);
-          await getPublishers($currentPageStore, $publishersSearch);
+          readersSearch.set(null);
+          await getReaders($currentPageStore, $readersSearch);
         }}
         action="create"
       >
@@ -108,7 +106,7 @@
             class="w-8 h-8 text-secondary-muted"
           />
         </Button>
-      </NewPublisherDialog>
+      </NewReaderDialog>
     {/if}
   </div>
   <div class="w-full h-full flex flex-col justify-between overflow-auto">
@@ -124,23 +122,23 @@
         <div
           class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 w-full h-full"
         >
-          {#each publishers as publisher}
+          {#each readers as reader}
             <Card.Root class="shadow-md">
               <Card.Content>
-                <a href={`/publishers/${publisher.id}`} class="block py-6">
-                  <H3>{publisher.nome}</H3>
+                <a href={`/readers/${reader.id}`} class="block py-6">
+                  <H3 class="line-clamp-2">{reader.nome}</H3>
                   <div class="flex flex-col gap-0">
-                    {#if publisher.morada}
-                      <P class="!mt-1">
-                        Morada: {publisher.morada} - {publisher.codigo_postal}
+                    {#if reader.morada}
+                      <P class="!mt-1 line-clamp-2">
+                        Morada: {reader.morada}
                       </P>
                     {/if}
-                    {#if publisher.email}
-                      <P class="!mt-1 line-clamp-2">Email: {publisher.email}</P>
+                    {#if reader.email}
+                      <P class="!mt-1 line-clamp-2">Email: {reader.email}</P>
                     {/if}
 
-                    {#if publisher.telefone}
-                      <P class="!mt-1">Telefone: {publisher.telefone}</P>
+                    {#if reader.telefone}
+                      <P class="!mt-1">Telefone: {reader.telefone}</P>
                     {/if}
                   </div>
                 </a>

@@ -3,7 +3,6 @@
   import { Button } from "$lib/components/ui/button";
   import { afterNavigate, goto } from "$app/navigation";
   import { call } from "$lib/call";
-  import type { permissao } from "$lib/types";
   import { toast } from "svelte-sonner";
   import { jwtStore } from "$lib/stores";
   import { writable } from "svelte/store";
@@ -83,6 +82,16 @@
         >
           <Icon
             icon="ph:factory-thin"
+            class="w-[1.5rem] h-[1.5rem] text-secondary-foreground"
+          />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          on:click={() => goto("/readers")}
+        >
+          <Icon
+            icon="ph:book-open-user-light"
             class="w-[1.5rem] h-[1.5rem] text-secondary-foreground"
           />
         </Button>

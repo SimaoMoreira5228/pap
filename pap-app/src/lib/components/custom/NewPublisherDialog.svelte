@@ -20,7 +20,7 @@
   let isLoading = writable(false);
 
   export let action: "create" | "update";
-  export let id: number | undefined = undefined;
+  export let id: string | undefined = undefined;
 
   async function createPublisher() {
     if (action !== "create") return;

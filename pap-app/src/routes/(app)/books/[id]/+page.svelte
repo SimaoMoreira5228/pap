@@ -102,7 +102,14 @@
         {:else if !book.requisitado && hasCreateRequestPermission}
           <RequestBookDialog {book} updateBook={getBook}>
             {#if hasCreateReaderPermission}
-              <NewReaderDialog />
+              <div class="flex flex-row gap-2">
+                se este for um novo leitor, podes
+                <NewReaderDialog action="create">
+                  <p slot="trigger" class="text-primary cursor-pointer">
+                    cria-lo
+                  </p>
+                </NewReaderDialog>
+              </div>
             {/if}
           </RequestBookDialog>
         {/if}
