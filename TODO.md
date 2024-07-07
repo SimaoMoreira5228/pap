@@ -1,18 +1,20 @@
 - [x] criar livro
 - [x] atualizar livro
 - [x] apagar livro
+- [ ]
 - [ ] criar_bibliotecario
 - [ ] atualizar_bibliotecario
 - [ ] apagar_bibliotecario
-- [x] criar leitor - feito ( mas falta fazer uma pagina para listar os leitores)
+- [ ] criar_cargo
+- [ ] atualizar_cargo
+- [ ] apagar_cargo
+- [ ]
+- [x] criar leitor
 - [x] atualizar_leitor
 - [x] apagar_leitor
 - [x] criar autor
 - [x] atualizar_autor
 - [x] apagar autor
-- [ ] criar_cargo
-- [ ] atualizar_cargo
-- [ ] apagar_cargo
 - [ ] criar_categoria
 - [ ] atualizar_categoria
 - [ ] apagar_categoria

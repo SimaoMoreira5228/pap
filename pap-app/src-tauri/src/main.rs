@@ -27,7 +27,10 @@ use publishers::{
     create_publisher, delete_publisher, get_books_by_publisher_id, get_publisher_by_id,
     get_publishers, get_publishers_by_name, get_publishers_count, update_publisher,
 };
-use readers::{create_reader, get_reader_by_id, get_readers_by_name, get_readers, get_readers_count, update_reader, delete_reader, get_requested_books_by_reader_id};
+use readers::{
+    create_reader, delete_reader, get_reader_by_id, get_readers, get_readers_by_name,
+    get_readers_count, get_requested_books_by_reader_id, update_reader,
+};
 use requests::{get_requested_book_by_book_id, request_book, return_book};
 use sqlx::{mysql::MySqlPoolOptions, MySql, Pool};
 use sub_categories::get_sub_categories_by_name;

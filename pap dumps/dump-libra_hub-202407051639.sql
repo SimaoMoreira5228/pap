@@ -5681,7 +5681,7 @@ CREATE TABLE `permissoes` (
 
 LOCK TABLES `permissoes` WRITE;
 /*!40000 ALTER TABLE `permissoes` DISABLE KEYS */;
-INSERT INTO `permissoes` VALUES
+INSERT INTO `permissoes` (id, acao, label) VALUES
 (1,'criar_livro','Criar Livro'),
 (2,'atualizar_livro','Atualizar Livro'),
 (3,'apagar_livro','Apagar Livro'),
@@ -5709,7 +5709,11 @@ INSERT INTO `permissoes` VALUES
 (25,'criar_sub_categoria','Criar Subcategoria'),
 (26,'atualizar_sub_categoria','Atualizar Subcategoria'),
 (27,'apagar_sub_categoria','Apagar Subcategoria'),
-(28,'mudar_configuracoes','Mudar Configurações');
+(28,'mudar_configuracoes','Mudar Configurações'),
+(29,'criar_editora', 'Criar Editora'),
+(30,'atualizar_editora', 'Atualizar Editora'),
+(31,'apagar_editora', 'Apagar Editora')
+ON DUPLICATE KEY UPDATE id=VALUES(id);
 /*!40000 ALTER TABLE `permissoes` ENABLE KEYS */;
 UNLOCK TABLES;
 

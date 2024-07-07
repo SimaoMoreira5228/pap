@@ -94,9 +94,9 @@ pub async fn create_tables(pool: &Pool<MySql>) -> Result<(), String> {
 (26,'atualizar_sub_categoria','Atualizar Subcategoria'),
 (27,'apagar_sub_categoria','Apagar Subcategoria'),
 (28,'mudar_configuracoes','Mudar Configurações'),
-(29,criar_editora,Criar Editora),
-(30,atualizar_editora,Atualizar Editora),
-(31,apagar_editora,Apagar Editora),
+(29,'criar_editora', 'Criar Editora'),
+(30,'atualizar_editora', 'Atualizar Editora'),
+(31,'apagar_editora', 'Apagar Editora')
 ON DUPLICATE KEY UPDATE id=VALUES(id);";
 
     let cargos = "CREATE TABLE IF NOT EXISTS `cargos` (
