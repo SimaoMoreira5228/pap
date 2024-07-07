@@ -7,6 +7,7 @@
   import { call } from "$lib/call";
   import type { Editora } from "$lib/types";
   import { writable } from "svelte/store";
+  import Icon from "@iconify/svelte";
 
   let name = "";
   let address = "";
@@ -124,7 +125,6 @@
       <slot name="trigger" />
     </button>
   </Dialog.Trigger>
-
   <Dialog.Content class="sm:max-w-[425px]">
     <Dialog.Header>
       <Dialog.Title
@@ -133,64 +133,73 @@
           : "Atualizar Editora"}</Dialog.Title
       >
     </Dialog.Header>
-    <div class="flex flex-col gap-4 py-4">
-      <div class="flex flex-col gap-2">
-        <Label for="nome">Nome</Label>
-        <Input
-          type="text"
-          id="nome"
-          name="nome"
-          class="border border-muted rounded-lg"
-          bind:value={name}
+    {#if $isLoading}
+      <div class="flex justify-center items-center w-full h-full">
+        <Icon
+          icon="svg-spinners:270-ring-with-bg"
+          class="w-8 h-8 text-primary"
         />
       </div>
-      <div class="flex flex-col gap-2">
-        <Label for="morada">Morada</Label>
-        <Input
-          type="text"
-          id="morada"
-          name="morada"
-          class="border border-muted rounded-lg"
-          bind:value={address}
-        />
+    {:else}
+      <div class="flex flex-col gap-4 py-4">
+        <div class="flex flex-col gap-2">
+          <Label for="nome">Nome</Label>
+          <Input
+            type="text"
+            id="nome"
+            name="nome"
+            class="border border-muted rounded-lg"
+            bind:value={name}
+          />
+        </div>
+        <div class="flex flex-col gap-2">
+          <Label for="morada">Morada</Label>
+          <Input
+            type="text"
+            id="morada"
+            name="morada"
+            class="border border-muted rounded-lg"
+            bind:value={address}
+          />
+        </div>
+        <div class="flex flex-col gap-2">
+          <Label for="telefone">codigoPostal</Label>
+          <Input
+            type="text"
+            id="codigoPostal"
+            name="codigoPostal"
+            class="border border-muted rounded-lg"
+            bind:value={postalCode}
+          />
+        </div>
+        <div class="flex flex-col gap-2">
+          <Label for="telefone">Telefone</Label>
+          <Input
+            type="text"
+            id="telefone"
+            name="telefone"
+            class="border border-muted rounded-lg"
+            bind:value={phone}
+          />
+        </div>
+        <div class="flex flex-col gap-2">
+          <Label for="email">Email</Label>
+          <Input
+            type="email"
+            id="email"
+            name="email"
+            class="border border-muted rounded-lg"
+            bind:value={email}
+          />
+        </div>
       </div>
-      <div class="flex flex-col gap-2">
-        <Label for="telefone">codigoPostal</Label>
-        <Input
-          type="text"
-          id="codigoPostal"
-          name="codigoPostal"
-          class="border border-muted rounded-lg"
-          bind:value={postalCode}
-        />
-      </div>
-      <div class="flex flex-col gap-2">
-        <Label for="telefone">Telefone</Label>
-        <Input
-          type="text"
-          id="telefone"
-          name="telefone"
-          class="border border-muted rounded-lg"
-          bind:value={phone}
-        />
-      </div>
-      <div class="flex flex-col gap-2">
-        <Label for="email">Email</Label>
-        <Input
-          type="email"
-          id="email"
-          name="email"
-          class="border border-muted rounded-lg"
-          bind:value={email}
-        />
-      </div>
-    </div>
-    <Dialog.Footer>
-      <Dialog.Close>
-        <Button type="submit" on:click={handleSubmit}>
-          {action === "create" ? "Criar Editora" : "Atualizar Editora"}
-        </Button>
-      </Dialog.Close>
-    </Dialog.Footer>
+      <Dialog.Footer>
+        <Dialog.Close>
+          <Button type="submit" on:click={handleSubmit}>
+            {action === "create" ? "Criar Editora" : "Atualizar Editora"}
+          </Button>
+        </Dialog.Close>
+      </Dialog.Footer>
+    {/if}
   </Dialog.Content>
 </Dialog.Root>

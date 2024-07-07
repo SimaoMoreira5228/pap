@@ -45,15 +45,18 @@
       hasUpdatePublisherPermission = await hasPermission("atualizar_editora");
       hasDeletePublisherPermission = await hasPermission("apagar_editora");
 
-      isLoading.set(false);
     } catch (error) {
       console.error(error);
       toast.error(error as string);
+    } finally {
+    isLoading.set(false);
     }
   });
 
   async function deletePublisher() {
     try {
+      isLoading.set(true);
+
       await call("delete_publisher", {
         id: parseInt(params.id),
       });
