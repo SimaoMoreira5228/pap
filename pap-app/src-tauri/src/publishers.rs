@@ -52,14 +52,15 @@ pub async fn get_publishers_by_name(
 
     let pool = &db.pool;
 
-    let publishers = sqlx::query_as::<_, Editora>("SELECT * FROM editoras WHERE LOWER(nome) LIKE LOWER(?)")
-        .bind(format!("%{}%", name.to_lowercase()))
-        .fetch_all(pool)
-        .await
-        .map_err(|e| {
-            tracing::error!("Falha ao consultar autores: {}", e);
-            format!("Falha ao consultar autores: {}", e)
-        })?;
+    let publishers =
+        sqlx::query_as::<_, Editora>("SELECT * FROM editoras WHERE LOWER(nome) LIKE LOWER(?)")
+            .bind(format!("%{}%", name.to_lowercase()))
+            .fetch_all(pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Falha ao consultar autores: {}", e);
+                format!("Falha ao consultar autores: {}", e)
+            })?;
 
     Ok(publishers)
 }
@@ -318,8 +319,10 @@ pub async fn update_publisher(
         format!("Falha ao verificar token: {}", e)
     })?;
 
-    sqlx::query("UPDATE editoras SET nome = ?, telefone = ?, email = ? WHERE id = ?")
+    sqlx::query("UPDATE editoras SET nome = ?, morada = ?, codigo_postal = ?, telefone = ?, email = ? WHERE id = ?")
         .bind(name)
+        .bind(address)
+        .bind(postal_code)
         .bind(phone)
         .bind(email)
         .bind(id)
