@@ -19,7 +19,7 @@
   let name = "";
   let password = "";
   let roleName = "";
-  let choosenPermissions: number[] = [];
+  let choosenPermissions: number[] = [28];
 
   let error = "";
 
@@ -197,10 +197,12 @@
                         name={permission.acao}
                         bind:group={choosenPermissions}
                         value={permission.id}
+                        disabled={permission.acao === "mudar_configuracoes"}
+                        on:change={() => console.log(choosenPermissions)}
                       />
-                      <Label for={permission.id.toString()}
-                        >{permission.label}</Label
-                      >
+                      <Label for={permission.id.toString()}>
+                        {permission.label}
+                      </Label>
                     </div>
                   {/each}
                 </div>
