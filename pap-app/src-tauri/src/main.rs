@@ -10,21 +10,27 @@ mod permissions;
 mod publishers;
 mod readers;
 mod requests;
+mod sub_categories;
 mod tables;
 
-use authors::{get_author_by_id, get_authors, get_authors_count, get_books_by_author_id};
-use books::{get_book_by_id, get_books, get_books_count};
+use authors::{
+    create_author, delete_author, get_author_by_id, get_authors, get_authors_by_name,
+    get_authors_count, get_books_by_author_id, update_author,
+};
+use books::{create_book, delete_book, get_book_by_id, get_books, get_books_count, update_book};
 use librarians::{
     check_librarians_existence, does_librarian_has_permission,
     does_librarian_has_permission_by_acao, get_librarian_permissions, login, new_librarian,
 };
 use permissions::{add_permission_to_role, get_permissions};
 use publishers::{
-    get_books_by_publisher_id, get_publisher_by_id, get_publishers, get_publishers_count,
+    create_publisher, delete_publisher, get_books_by_publisher_id, get_publisher_by_id,
+    get_publishers, get_publishers_by_name, get_publishers_count, update_publisher,
 };
 use readers::{create_reader, get_reader_by_id, get_readers_by_name};
 use requests::{get_requested_book_by_book_id, request_book, return_book};
 use sqlx::{mysql::MySqlPoolOptions, MySql, Pool};
+use sub_categories::get_sub_categories_by_name;
 use tables::create_tables;
 use tauri::Manager;
 use tokio::sync::Mutex;
@@ -123,6 +129,9 @@ fn main() {
             get_books,
             get_books_count,
             get_book_by_id,
+            create_book,
+            update_book,
+            delete_book,
             // requests
             request_book,
             get_requested_book_by_book_id,
@@ -143,14 +152,24 @@ fn main() {
             create_reader,
             // authors
             get_author_by_id,
+            get_authors_by_name,
             get_books_by_author_id,
             get_authors,
             get_authors_count,
+            create_author,
+            update_author,
+            delete_author,
             // publishers
             get_publisher_by_id,
+            get_publishers_by_name,
             get_books_by_publisher_id,
             get_publishers,
-            get_publishers_count
+            get_publishers_count,
+            create_publisher,
+            update_publisher,
+            delete_publisher,
+            // sub-categories
+            get_sub_categories_by_name,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

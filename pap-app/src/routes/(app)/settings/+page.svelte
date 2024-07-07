@@ -5,7 +5,6 @@
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label";
   import { dbStringStore, jwtStore, loanPeriodStore } from "$lib/stores";
-  import type { permissao } from "$lib/types";
   import { onMount } from "svelte";
   import { toast } from "svelte-sonner";
 
@@ -49,7 +48,7 @@
         type="submit"
         on:click={(event) => {
           event.preventDefault();
-          dbStringStore.set(dbUrl);
+          dbStringStore.set({ dbUrl });
         }}
       >
         Guardar

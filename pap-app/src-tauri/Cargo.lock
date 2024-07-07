@@ -3,6 +3,26 @@
 version = 3
 
 [[package]]
+name = "Libra-Hub"
+version = "0.0.0"
+dependencies = [
+ "bcrypt",
+ "chrono",
+ "hmac",
+ "jwt",
+ "lazy_static",
+ "serde",
+ "serde_json",
+ "sha2",
+ "sqlx",
+ "tauri",
+ "tauri-build",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2038,26 +2058,6 @@ dependencies = [
  "gobject-sys",
  "libc",
  "system-deps 6.2.2",
-]
-
-[[package]]
-name = "pap-app"
-version = "0.0.0"
-dependencies = [
- "bcrypt",
- "chrono",
- "hmac",
- "jwt",
- "lazy_static",
- "serde",
- "serde_json",
- "sha2",
- "sqlx",
- "tauri",
- "tauri-build",
- "tokio",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]

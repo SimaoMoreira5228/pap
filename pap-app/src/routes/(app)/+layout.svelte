@@ -11,6 +11,7 @@
   import { Sun, Moon } from "lucide-svelte";
   import { Toaster } from "svelte-sonner";
   import { toggleMode, setMode, localStorageKey } from "mode-watcher";
+  import { hasPermission } from "$lib/utils";
 
   if (!localStorage.getItem(localStorageKey)) {
     setMode("light");
@@ -23,18 +24,12 @@
     refreshBar.set(true);
   });
 
-  async function hasPermission(acao: string) {
-    return await call<boolean>("does_librarian_has_permission_by_acao", {
-        acao,
-      });
-  }
-
   $: if ($refreshBar) {
     (async () => {
       try {
         if (await call<boolean>("check_librarians_existence")) {
           if (jwtStore.get() !== "") {
-            settingsPermission = hasPermission("mudar_configuracoes");
+            settingsPermission = await hasPermission("mudar_configuracoes");
           }
         } else {
           settingsPermission = true;

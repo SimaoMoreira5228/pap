@@ -10,10 +10,20 @@
   import RequestBookDialog from "$lib/components/custom/RequestBookDialog.svelte";
   import NewReaderDialog from "$lib/components/custom/NewReaderDialog.svelte";
   import BookReturnDialog from "$lib/components/custom/BookReturnDialog.svelte";
+  import NewBookDialog from "$lib/components/custom/NewBookDialog.svelte";
+  import { hasPermission } from "$lib/utils";
+  import { Button } from "$lib/components/ui/button";
+  import { goto } from "$app/navigation";
 
   let params = $page.params;
   let isLoading = writable(true);
   let book: Livro;
+
+  let hasUpdateBookPermission = false;
+  let hasDeleteBookPermission = false;
+  let hasCreateReaderPermission = false;
+  let hasCreateRequestPermission = false;
+  let hasUpdateRequestPermission = false;
 
   const getBook = async () => {
     try {
@@ -31,7 +41,29 @@
 
   onMount(async () => {
     await getBook();
+
+    hasUpdateBookPermission = await hasPermission("atualizar_livro");
+    hasDeleteBookPermission = await hasPermission("apagar_livro");
+    hasCreateReaderPermission = await hasPermission("criar_leitor");
+    hasCreateRequestPermission = await hasPermission("criar_requisicao");
+    hasUpdateRequestPermission = await hasPermission("atualizar_requisicao");
   });
+
+  async function deleteBook() {
+    try {
+      await call("delete_book", {
+        id: parseInt(params.id),
+      });
+
+      toast.success("Livro apagado com sucesso");
+
+      goto("/books");
+    } catch (error) {
+      toast.error(error as string);
+    } finally {
+      isLoading.set(false);
+    }
+  }
 </script>
 
 {#if $isLoading}
@@ -60,15 +92,37 @@
         <P class="text-muted-foreground">{book.ano_edicao}</P>
       </div>
       <div>
-        <P>{book.resumo}</P>
+        <P class="line-clamp-5">{book.resumo}</P>
       </div>
-      <div class="mt-8">
+      <div class="mt-8 flex flex-row gap-2">
         {#if book.requisitado}
-          <BookReturnDialog bookId={book.id} updateBook={getBook} />
-        {:else}
+          {#if hasUpdateRequestPermission}
+            <BookReturnDialog bookId={book.id} updateBook={getBook} />
+          {/if}
+        {:else if !book.requisitado && hasCreateRequestPermission}
           <RequestBookDialog {book} updateBook={getBook}>
-            <NewReaderDialog />
+            {#if hasCreateReaderPermission}
+              <NewReaderDialog />
+            {/if}
           </RequestBookDialog>
+        {/if}
+        {#if hasDeleteBookPermission}
+          <Button variant="outline" size="icon" on:click={deleteBook}>
+            <Icon
+              icon="material-symbols-light:delete-outline-rounded"
+              class="w-8 h-8 text-secondary-muted"
+            />
+          </Button>
+        {/if}
+        {#if hasUpdateBookPermission}
+          <NewBookDialog action="update" bookId={book.id} updateBooks={getBook}>
+            <Button variant="outline" size="icon" slot="trigger">
+              <Icon
+                icon="material-symbols-light:ink-pen-outline"
+                class="w-8 h-8 text-secondary-muted"
+              />
+            </Button>
+          </NewBookDialog>
         {/if}
       </div>
     </div>

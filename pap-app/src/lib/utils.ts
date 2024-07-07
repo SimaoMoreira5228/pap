@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { cubicOut } from "svelte/easing";
 import type { TransitionConfig } from "svelte/transition";
+import { call } from "./call";
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
@@ -60,3 +61,9 @@ export const flyAndScale = (
 		easing: cubicOut
 	};
 };
+
+export async function hasPermission(acao: string) {
+	return await call<boolean>("does_librarian_has_permission_by_acao", {
+			acao,
+		});
+}

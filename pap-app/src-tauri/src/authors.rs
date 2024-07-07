@@ -35,6 +35,31 @@ pub async fn get_author_by_id(
 }
 
 #[tauri::command]
+pub async fn get_authors_by_name(
+    name: String,
+    state: tauri::State<'_, Mutex<Option<Database>>>,
+) -> Result<Vec<Autor>, String> {
+    let state_lock = state.lock().await;
+    let db = state_lock
+        .as_ref()
+        .ok_or("Base de dados não inicializada")?;
+
+    let pool = &db.pool;
+
+    let authors =
+        sqlx::query_as::<_, Autor>("SELECT * FROM autores WHERE LOWER(nome) LIKE LOWER(?)")
+            .bind(format!("%{}%", name.to_lowercase()))
+            .fetch_all(pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Falha ao consultar autores: {}", e);
+                format!("Falha ao consultar autores: {}", e)
+            })?;
+
+    Ok(authors)
+}
+
+#[tauri::command]
 pub async fn get_books_by_author_id(
     id: i32,
     state: tauri::State<'_, Mutex<Option<Database>>>,
@@ -219,4 +244,110 @@ pub async fn get_authors_count(
     }
 
     Ok(count)
+}
+
+#[tauri::command]
+pub async fn create_author(
+    token: String,
+    name: String,
+    nationality: String,
+    birth_date: Option<String>,
+    death_date: Option<String>,
+    state: tauri::State<'_, Mutex<Option<Database>>>,
+) -> Result<(), String> {
+    let state_lock = state.lock().await;
+    let db = state_lock
+        .as_ref()
+        .ok_or("Base de dados não inicializada")?;
+
+    let pool = &db.pool;
+
+    verify_jwt(&token, &pool).await.map_err(|e| {
+        tracing::error!("Falha ao verificar token: {}", e);
+        format!("Falha ao verificar token: {}", e)
+    })?;
+
+    sqlx::query(
+        "INSERT INTO autores (nome, nacionalidade, data_nasc, data_morte) VALUES (?, ?, ?, ?)",
+    )
+    .bind(name)
+    .bind(nationality)
+    .bind(birth_date)
+    .bind(death_date)
+    .execute(pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Falha ao criar autor: {}", e);
+        format!("Falha ao criar autor: {}", e)
+    })?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn update_author(
+    token: String,
+    id: i32,
+    name: String,
+    nationality: String,
+    birth_date: Option<String>,
+    death_date: Option<String>,
+    state: tauri::State<'_, Mutex<Option<Database>>>,
+) -> Result<(), String> {
+    let state_lock = state.lock().await;
+    let db = state_lock
+        .as_ref()
+        .ok_or("Base de dados não inicializada")?;
+
+    let pool = &db.pool;
+
+    verify_jwt(&token, &pool).await.map_err(|e| {
+        tracing::error!("Falha ao verificar token: {}", e);
+        format!("Falha ao verificar token: {}", e)
+    })?;
+
+    sqlx::query("UPDATE autores SET nome = ?, nacionalidade = ?, data_nasc = ?, data_morte = ? WHERE id = ?")
+        .bind(name)
+        .bind(nationality)
+        .bind(birth_date)
+        .bind(death_date)
+        .bind(id)
+        .execute(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Falha ao atualizar autor: {}", e);
+            format!("Falha ao atualizar autor: {}", e)
+        })?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn delete_author(
+    token: String,
+    id: i32,
+    state: tauri::State<'_, Mutex<Option<Database>>>,
+) -> Result<(), String> {
+    let state_lock = state.lock().await;
+    let db = state_lock
+        .as_ref()
+        .ok_or("Base de dados não inicializada")?;
+
+    let pool = &db.pool;
+
+    verify_jwt(&token, &pool).await.map_err(|e| {
+        tracing::error!("Falha ao verificar token: {}", e);
+        format!("Falha ao verificar token: {}", e)
+    })?;
+
+    sqlx::query("DELETE FROM autores WHERE id = ?")
+        .bind(id)
+        .execute(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Falha ao deletar autor: {}", e);
+            format!("Falha ao deletar autor: {}", e)
+        })?;
+
+    Ok(())
 }

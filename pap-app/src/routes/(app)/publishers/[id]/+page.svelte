@@ -1,9 +1,13 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
   import { page } from "$app/stores";
   import { call } from "$lib/call";
   import BooksDisplay from "$lib/components/custom/BooksDisplay.svelte";
+  import NewPublisherDialog from "$lib/components/custom/NewPublisherDialog.svelte";
+  import { Button } from "$lib/components/ui/button";
   import { H3, H2, P } from "$lib/components/ui/typography";
   import type { Editora, Livro } from "$lib/types";
+  import { hasPermission } from "$lib/utils";
   import Icon from "@iconify/svelte";
   import { onMount } from "svelte";
   import { toast } from "svelte-sonner";
@@ -14,10 +18,11 @@
   let books: Livro[];
   let isLoading = writable(true);
 
-  onMount(async () => {
-    try {
-      isLoading.set(true);
+  let hasUpdatePublisherPermission = false;
+  let hasDeletePublisherPermission = false;
 
+  async function loadPublisher() {
+    try {
       publisher = await call("get_publisher_by_id", {
         id: parseInt(params.id),
       });
@@ -25,6 +30,20 @@
       books = await call("get_books_by_publisher_id", {
         id: parseInt(params.id),
       });
+    } catch (error) {
+      console.error(error);
+      toast.error(error as string);
+    }
+  }
+
+  onMount(async () => {
+    try {
+      isLoading.set(true);
+
+      await loadPublisher();
+
+      hasUpdatePublisherPermission = await hasPermission("atualizar_editora");
+      hasDeletePublisherPermission = await hasPermission("apagar_editora");
 
       isLoading.set(false);
     } catch (error) {
@@ -32,6 +51,22 @@
       toast.error(error as string);
     }
   });
+
+  async function deletePublisher() {
+    try {
+      await call("delete_publisher", {
+        id: parseInt(params.id),
+      });
+
+      toast.success("Autor excluído com sucesso");
+
+      goto("/publishers");
+    } catch (error) {
+      toast.error(error as string);
+    } finally {
+      isLoading.set(false);
+    }
+  }
 </script>
 
 <div class="flex w-full h-full overflow-auto">
@@ -41,10 +76,36 @@
     </div>
   {:else}
     <div class="flex flex-col w-full h-full">
-      <H2>{publisher.nome}</H2>
+      <div class="flex flex-row justify-start items-center gap-2">
+        <H2>{publisher.nome}</H2>
+        {#if hasDeletePublisherPermission}
+          <Button variant="outline" size="icon" on:click={deletePublisher}>
+            <Icon
+              icon="material-symbols-light:delete-outline-rounded"
+              class="w-8 h-8 text-secondary-muted"
+            />
+          </Button>
+        {/if}
+        {#if hasUpdatePublisherPermission}
+          <NewPublisherDialog
+            updatePublishers={loadPublisher}
+            id={publisher.id}
+            action="update"
+          >
+            <Button slot="trigger" variant="outline" size="icon">
+              <Icon
+                icon="material-symbols-light:ink-pen-outline"
+                class="w-8 h-8 text-secondary-muted"
+              />
+            </Button>
+          </NewPublisherDialog>
+        {/if}
+      </div>
       <div class="flex flex-col gap-0">
         {#if publisher.morada}
-          <P class="!mt-1">Morada: {publisher.morada} - {publisher.codigo_postal}</P>
+          <P class="!mt-1"
+            >Morada: {publisher.morada} - {publisher.codigo_postal}</P
+          >
         {/if}
         {#if publisher.email}
           <P class="!mt-1">Email: {publisher.email}</P>

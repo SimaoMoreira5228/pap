@@ -23,6 +23,23 @@ export interface Leitor {
   email: string;
 }
 
+export interface Categoria {
+  id: number,
+  nome: string,
+}
+
+export interface Secao {
+  id: number,
+  id_categoria: number,
+  nome: string,
+}
+
+export interface SubCategoria {
+  id: number;
+  id_categoria: number;
+  nome: string;
+}
+
 export interface permissao {
   id: number;
   acao: string;

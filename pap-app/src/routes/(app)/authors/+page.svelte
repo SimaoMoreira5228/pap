@@ -1,11 +1,13 @@
 <script lang="ts">
   import { call } from "$lib/call";
+  import NewAuthorDialog from "$lib/components/custom/NewAuthorDialog.svelte";
   import SearchBar from "$lib/components/custom/SearchBar.svelte";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import { H2, H3, P } from "$lib/components/ui/typography";
   import { jwtStore } from "$lib/stores";
   import type { Autor } from "$lib/types";
+  import { hasPermission } from "$lib/utils";
   import Icon from "@iconify/svelte";
   import { ChevronLeft, ChevronRight } from "lucide-svelte";
   import { onMount } from "svelte";
@@ -18,6 +20,8 @@
   let currentPageStore = writable(0);
   let authorsSearch = writable<string | null>(null);
   const isLoading = writable(false);
+
+  let hasCreateAuthorPermission = false;
 
   $: pages = getPages($currentPageStore, totalAuthors);
 
@@ -64,6 +68,8 @@
 
   onMount(async () => {
     getAuthors($currentPageStore, $authorsSearch);
+
+    hasCreateAuthorPermission = await hasPermission("criar_autor");
   });
 
   currentPageStore.subscribe((value) => {
@@ -79,11 +85,28 @@
 
 <div class="w-full h-full flex flex-col justify-start">
   <H2 class="w-[15%]">Autores</H2>
-  <div class="w-full flex items-center justify-center py-4">
+  <div class="w-full flex items-center justify-center py-4 gap-1">
     <SearchBar
       searchFunction={(value) => getAuthors($currentPageStore, value)}
       class="!w-[90%]"
     />
+    {#if hasCreateAuthorPermission}
+      <NewAuthorDialog
+        updateAuthors={async () => {
+          currentPageStore.set(0);
+          authorsSearch.set(null);
+          await getAuthors($currentPageStore, $authorsSearch);
+        }}
+        action="create"
+      >
+        <Button slot="trigger" variant="outline" size="icon">
+          <Icon
+            icon="material-symbols-light:add-box-outline-rounded"
+            class="w-8 h-8 text-secondary-muted"
+          />
+        </Button>
+      </NewAuthorDialog>
+    {/if}
   </div>
   <div class="w-full h-full flex flex-col justify-between overflow-auto">
     {#if $isLoading}

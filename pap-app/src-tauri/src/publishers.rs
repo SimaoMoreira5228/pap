@@ -41,6 +41,30 @@ pub async fn get_publisher_by_id(
 }
 
 #[tauri::command]
+pub async fn get_publishers_by_name(
+    name: String,
+    state: tauri::State<'_, Mutex<Option<Database>>>,
+) -> Result<Vec<Editora>, String> {
+    let state_lock = state.lock().await;
+    let db = state_lock
+        .as_ref()
+        .ok_or("Base de dados não inicializada")?;
+
+    let pool = &db.pool;
+
+    let publishers = sqlx::query_as::<_, Editora>("SELECT * FROM editoras WHERE LOWER(nome) LIKE LOWER(?)")
+        .bind(format!("%{}%", name.to_lowercase()))
+        .fetch_all(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Falha ao consultar autores: {}", e);
+            format!("Falha ao consultar autores: {}", e)
+        })?;
+
+    Ok(publishers)
+}
+
+#[tauri::command]
 pub async fn get_books_by_publisher_id(
     token: String,
     id: i32,
@@ -231,4 +255,110 @@ pub async fn get_publishers_count(
     }
 
     Ok(count)
+}
+
+#[tauri::command]
+pub async fn create_publisher(
+    token: String,
+    name: String,
+    address: String,
+    postal_code: String,
+    phone: String,
+    email: String,
+    state: tauri::State<'_, Mutex<Option<Database>>>,
+) -> Result<(), String> {
+    let state_lock = state.lock().await;
+    let db = state_lock
+        .as_ref()
+        .ok_or("Base de dados não inicializada")?;
+
+    let pool = &db.pool;
+
+    verify_jwt(&token, &pool).await.map_err(|e| {
+        tracing::error!("Falha ao verificar token: {}", e);
+        format!("Falha ao verificar token: {}", e)
+    })?;
+
+    sqlx::query("INSERT INTO editoras (nome, morada, codigo_postal, telefone, email) VALUES (?, ?, ?, ?, ?)")
+        .bind(name)
+        .bind(address)
+        .bind(postal_code)
+        .bind(phone)
+        .bind(email)
+        .execute(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Falha ao criar editora: {}", e);
+            format!("Falha ao criar editora: {}", e)
+        })?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn update_publisher(
+    token: String,
+    id: i32,
+    name: String,
+    address: String,
+    postal_code: String,
+    phone: String,
+    email: String,
+    state: tauri::State<'_, Mutex<Option<Database>>>,
+) -> Result<(), String> {
+    let state_lock = state.lock().await;
+    let db = state_lock
+        .as_ref()
+        .ok_or("Base de dados não inicializada")?;
+
+    let pool = &db.pool;
+
+    verify_jwt(&token, &pool).await.map_err(|e| {
+        tracing::error!("Falha ao verificar token: {}", e);
+        format!("Falha ao verificar token: {}", e)
+    })?;
+
+    sqlx::query("UPDATE editoras SET nome = ?, telefone = ?, email = ? WHERE id = ?")
+        .bind(name)
+        .bind(phone)
+        .bind(email)
+        .bind(id)
+        .execute(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Falha ao atualizar editora: {}", e);
+            format!("Falha ao atualizar editora: {}", e)
+        })?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn delete_publisher(
+    token: String,
+    id: i32,
+    state: tauri::State<'_, Mutex<Option<Database>>>,
+) -> Result<(), String> {
+    let state_lock = state.lock().await;
+    let db = state_lock
+        .as_ref()
+        .ok_or("Base de dados não inicializada")?;
+
+    let pool = &db.pool;
+
+    verify_jwt(&token, &pool).await.map_err(|e| {
+        tracing::error!("Falha ao verificar token: {}", e);
+        format!("Falha ao verificar token: {}", e)
+    })?;
+
+    sqlx::query("DELETE FROM editoras WHERE id = ?")
+        .bind(id)
+        .execute(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Falha ao deletar editora: {}", e);
+            format!("Falha ao deletar editora: {}", e)
+        })?;
+
+    Ok(())
 }

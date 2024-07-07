@@ -269,3 +269,169 @@ pub async fn get_books_count(
 
     Ok(count)
 }
+
+#[tauri::command]
+pub async fn create_book(
+    token: String,
+    name: String,
+    resume: Option<String>,
+    n_pages: String,
+    language: String,
+    img_url: Option<String>,
+    ano_edicao: Option<String>,
+    author_id: String,
+    publisher_id: String,
+    sub_category_id: String,
+    state: tauri::State<'_, Mutex<Option<Database>>>,
+) -> Result<(), String> {
+    let state_lock = state.lock().await;
+    let db = state_lock
+        .as_ref()
+        .ok_or("Base de dados não inicializada")?;
+
+    let pool = &db.pool;
+
+    verify_jwt(&token, &pool).await.map_err(|e| {
+        tracing::error!("Falha ao verificar token: {}", e);
+        format!("Falha ao verificar token: {}", e)
+    })?;
+
+    let category_id: i32 = sqlx::query_scalar(
+        "SELECT id FROM categorias WHERE (SELECT id_categoria FROM sub_categorias WHERE id = ?)",
+    )
+    .bind(&sub_category_id)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Falha ao consultar categoria: {}", e);
+        format!("Falha ao consultar categoria: {}", e)
+    })?;
+
+    let secao_id: i32 = sqlx::query_scalar("SELECT id FROM secoes WHERE id_categoria = ?")
+        .bind(category_id)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Falha ao consultar secao: {}", e);
+            format!("Falha ao consultar secao: {}", e)
+        })?;
+
+    sqlx::query("INSERT INTO livros (nome, resumo, n_paginas, idioma, img_url, ano_edicao, id_autor, id_editora, id_secao, id_sub_categoria) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        .bind(name)
+        .bind(resume)
+        .bind(n_pages)
+        .bind(language)
+        .bind(img_url)
+        .bind(ano_edicao)
+        .bind(author_id)
+        .bind(publisher_id)
+        .bind(secao_id)
+        .bind(sub_category_id)
+        .execute(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Falha ao criar livro: {}", e);
+            format!("Falha ao criar livro: {}", e)
+        })?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn update_book(
+    token: String,
+    id: i32,
+    name: String,
+    resume: Option<String>,
+    n_pages: String,
+    language: String,
+    img_url: Option<String>,
+    ano_edicao: Option<String>,
+    author_id: String,
+    publisher_id: String,
+    sub_category_id: String,
+    state: tauri::State<'_, Mutex<Option<Database>>>,
+) -> Result<(), String> {
+    let state_lock = state.lock().await;
+    let db = state_lock
+        .as_ref()
+        .ok_or("Base de dados não inicializada")?;
+
+    let pool = &db.pool;
+
+    verify_jwt(&token, &pool).await.map_err(|e| {
+        tracing::error!("Falha ao verificar token: {}", e);
+        format!("Falha ao verificar token: {}", e)
+    })?;
+
+    let category_id: i32 = sqlx::query_scalar(
+        "SELECT id FROM categorias WHERE (SELECT id_categoria FROM sub_categorias WHERE id = ?)",
+    )
+    .bind(&sub_category_id)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Falha ao consultar categoria: {}", e);
+        format!("Falha ao consultar categoria: {}", e)
+    })?;
+
+    let secao_id: i32 = sqlx::query_scalar("SELECT id FROM secoes WHERE id_categoria = ?")
+        .bind(category_id)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Falha ao consultar secao: {}", e);
+            format!("Falha ao consultar secao: {}", e)
+        })?;
+
+    sqlx::query("UPDATE livros SET nome = ?, resumo = ?, n_paginas = ?, idioma = ?, img_url = ?, ano_edicao = ?, id_autor = ?, id_editora = ?, id_secao = ?, id_sub_categoria = ? WHERE id = ?")
+        .bind(name)
+        .bind(resume)
+        .bind(n_pages)
+        .bind(language)
+        .bind(img_url)
+        .bind(ano_edicao)
+        .bind(author_id)
+        .bind(publisher_id)
+        .bind(secao_id)
+        .bind(sub_category_id)
+        .bind(id)
+        .execute(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Falha ao atualizar livro: {}", e);
+            format!("Falha ao atualizar livro: {}", e)
+        })?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn delete_book(
+    token: String,
+    id: i32,
+    state: tauri::State<'_, Mutex<Option<Database>>>,
+) -> Result<(), String> {
+    let state_lock = state.lock().await;
+    let db = state_lock
+        .as_ref()
+        .ok_or("Base de dados não inicializada")?;
+
+    let pool = &db.pool;
+
+    verify_jwt(&token, &pool).await.map_err(|e| {
+        tracing::error!("Falha ao verificar token: {}", e);
+        format!("Falha ao verificar token: {}", e)
+    })?;
+
+    sqlx::query("DELETE FROM livros WHERE id = ?")
+        .bind(id)
+        .execute(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Falha ao deletar livro: {}", e);
+            format!("Falha ao deletar livro: {}", e)
+        })?;
+
+    Ok(())
+}

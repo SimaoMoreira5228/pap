@@ -1,11 +1,13 @@
 <script lang="ts">
   import { call } from "$lib/call";
+  import NewPublisherDialog from "$lib/components/custom/NewPublisherDialog.svelte";
   import SearchBar from "$lib/components/custom/SearchBar.svelte";
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import { H2, H3, P } from "$lib/components/ui/typography";
   import { jwtStore } from "$lib/stores";
   import type { Editora } from "$lib/types";
+  import { hasPermission } from "$lib/utils";
   import Icon from "@iconify/svelte";
   import { ChevronLeft, ChevronRight } from "lucide-svelte";
   import { onMount } from "svelte";
@@ -18,6 +20,8 @@
   let currentPageStore = writable(0);
   let publishersSearch = writable<string | null>(null);
   const isLoading = writable(false);
+
+  let hasCreatePublisherPermission = false;
 
   $: pages = getPages($currentPageStore, totalPublishers);
 
@@ -67,6 +71,8 @@
 
   onMount(async () => {
     getPublishers($currentPageStore, $publishersSearch);
+
+    hasCreatePublisherPermission = await hasPermission("criar_editora");
   });
 
   currentPageStore.subscribe((value) => {
@@ -82,11 +88,28 @@
 
 <div class="w-full h-full flex flex-col justify-start">
   <H2 class="w-[15%]">Editoras</H2>
-  <div class="w-full flex items-center justify-center py-4">
+  <div class="w-full flex items-center justify-center py-4 gap-1">
     <SearchBar
       searchFunction={(value) => getPublishers($currentPageStore, value)}
       class="!w-[90%]"
     />
+    {#if hasCreatePublisherPermission}
+      <NewPublisherDialog
+        updatePublishers={async () => {
+          currentPageStore.set(0);
+          publishersSearch.set(null);
+          await getPublishers($currentPageStore, $publishersSearch);
+        }}
+        action="create"
+      >
+        <Button slot="trigger" variant="outline" size="icon">
+          <Icon
+            icon="material-symbols-light:add-box-outline-rounded"
+            class="w-8 h-8 text-secondary-muted"
+          />
+        </Button>
+      </NewPublisherDialog>
+    {/if}
   </div>
   <div class="w-full h-full flex flex-col justify-between overflow-auto">
     {#if $isLoading}

@@ -11,6 +11,8 @@
   import { jwtStore } from "$lib/stores";
   import BooksDisplay from "$lib/components/custom/BooksDisplay.svelte";
   import SearchBar from "$lib/components/custom/SearchBar.svelte";
+  import NewBookDialog from "$lib/components/custom/NewBookDialog.svelte";
+  import { hasPermission } from "$lib/utils";
 
   let books: Livro[] = [];
   let booksPerPage = 12;
@@ -28,6 +30,7 @@
     let backPages = Array.from({ length: 3 })
       .map((_, i) => current - i - 1)
       .reverse();
+
     let frontPages = Array.from({ length: 3 }).map((_, i) => current + i + 1);
 
     return { firstPage, lastPage, backPages, frontPages };
@@ -75,15 +78,46 @@
 
     getBooks(value, $bookSearch);
   });
+
+  const hasCreatePermission = hasPermission("criar_livro");
 </script>
 
 <div class="w-full h-full flex flex-col justify-start">
   <H2 class="w-[15%]">Livros</H2>
-  <div class="w-full flex items-center justify-center py-4">
+  <div class="w-full flex items-center justify-center py-4 gap-1">
     <SearchBar
-      searchFunction={(value) => getBooks($currentPageStore, value)}
+      searchFunction={(value) => {
+        currentPageStore.set(0);
+        getBooks($currentPageStore, value);
+      }}
       class="!w-[90%]"
     />
+    {#await hasCreatePermission}
+      <div class="flex justify-center items-center">
+        <Icon
+          icon="svg-spinners:270-ring-with-bg"
+          class="w-8 h-8 text-primary"
+        />
+      </div>
+    {:then hasPermission}
+      {#if hasPermission}
+        <NewBookDialog
+          updateBooks={async () => {
+            currentPageStore.set(0);
+            bookSearch.set(null);
+            await getBooks($currentPageStore, $bookSearch);
+          }}
+          action="create"
+        >
+          <Button variant="outline" size="icon" slot="trigger">
+            <Icon
+              icon="material-symbols-light:add-box-outline-rounded"
+              class="w-8 h-8 text-secondary-muted"
+            />
+          </Button>
+        </NewBookDialog>
+      {/if}
+    {/await}
   </div>
   <div class="w-full h-full flex flex-col justify-between overflow-auto">
     {#if $isLoading}
@@ -107,13 +141,15 @@
       <div class="flex flex-row gap-12">
         <div>
           {#if $currentPageStore - 1 >= 0}
-            <Button
-              on:click={() => ($currentPageStore = pages.firstPage)}
-              variant="outline"
-              size="icon"
-            >
-              {pages.firstPage}
-            </Button>
+            {#if pages.backPages.find((page) => page === pages.firstPage) === undefined}
+              <Button
+                on:click={() => ($currentPageStore = pages.firstPage)}
+                variant="outline"
+                size="icon"
+              >
+                {pages.firstPage + 1}
+              </Button>
+            {/if}
             {#each pages.backPages as page}
               {#if page >= 0}
                 <Button

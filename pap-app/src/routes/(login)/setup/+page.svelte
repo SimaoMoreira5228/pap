@@ -9,7 +9,7 @@
   import Icon from "@iconify/svelte";
   import { writable } from "svelte/store";
 
-  let dbUrl = "";
+  let dbUrl = dbStringStore.get().dbUrl;
   let makeTables = false;
   $: isLoading = writable(false);
 </script>
