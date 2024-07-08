@@ -10,6 +10,7 @@ mod permissions;
 mod publishers;
 mod readers;
 mod requests;
+mod roles;
 mod sub_categories;
 mod tables;
 
@@ -19,8 +20,9 @@ use authors::{
 };
 use books::{create_book, delete_book, get_book_by_id, get_books, get_books_count, update_book};
 use librarians::{
-    check_librarians_existence, does_librarian_has_permission,
-    does_librarian_has_permission_by_acao, get_librarian_permissions, login, new_librarian,
+    check_librarians_existence, delete_librarian, does_librarian_has_permission,
+    does_librarian_has_permission_by_acao, get_librarian_by_id, get_librarian_permissions,
+    get_librarians, login, new_librarian, update_librarian,
 };
 use permissions::{add_permission_to_role, get_permissions};
 use publishers::{
@@ -32,6 +34,7 @@ use readers::{
     get_readers_count, get_requested_books_by_reader_id, update_reader,
 };
 use requests::{get_requested_book_by_book_id, request_book, return_book};
+use roles::{delete_role, get_roles, update_role, create_role, get_role_by_name};
 use sqlx::{mysql::MySqlPoolOptions, MySql, Pool};
 use sub_categories::get_sub_categories_by_name;
 use tables::create_tables;
@@ -145,6 +148,10 @@ fn main() {
             check_librarians_existence,
             get_librarian_permissions,
             does_librarian_has_permission_by_acao,
+            get_librarians,
+            get_librarian_by_id,
+            update_librarian,
+            delete_librarian,
             // permissions
             does_librarian_has_permission,
             get_permissions,
@@ -178,6 +185,12 @@ fn main() {
             delete_publisher,
             // sub-categories
             get_sub_categories_by_name,
+            // roles
+            get_roles,
+            create_role,
+            update_role,
+            delete_role,
+            get_role_by_name,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

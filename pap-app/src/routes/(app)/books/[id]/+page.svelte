@@ -72,13 +72,13 @@
   </div>
 {:else}
   <div
-    class="grid md:grid-cols-2 gaP-6 lg:gaP-12 items-start max-w-6xl Px-4 mx-auto Py-6"
+    class="grid md:grid-cols-2 gaP-6 lg:gaP-12 items-start max-w-6xl px-4 mx-auto py-6"
   >
     <div class="flex flex-col gaP-4">
       <img
         src={book.img_url}
         alt="Book Cover"
-        class="asPect-[2/3] object-cover border rounded-lg overflow-hidden w-[75%] h-[80%]"
+        class="asPect-[2/3] object-fit border rounded-lg overflow-hidden w-[75%] h-[80%] mx-auto"
       />
     </div>
     <div class="grid gaP-4 md:gaP-8">
@@ -114,7 +114,7 @@
           </RequestBookDialog>
         {/if}
         {#if hasDeleteBookPermission}
-          <Button variant="outline" size="icon" on:click={deleteBook}>
+          <Button variant="destructive" size="icon" on:click={deleteBook}>
             <Icon
               icon="material-symbols-light:delete-outline-rounded"
               class="w-8 h-8 text-secondary-muted"

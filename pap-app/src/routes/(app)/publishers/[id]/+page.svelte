@@ -82,7 +82,7 @@
       <div class="flex flex-row justify-start items-center gap-2">
         <H2>{publisher.nome}</H2>
         {#if hasDeletePublisherPermission}
-          <Button variant="outline" size="icon" on:click={deletePublisher}>
+          <Button variant="destructive" size="icon" on:click={deletePublisher}>
             <Icon
               icon="material-symbols-light:delete-outline-rounded"
               class="w-8 h-8 text-secondary-muted"
@@ -92,7 +92,7 @@
         {#if hasUpdatePublisherPermission}
           <NewPublisherDialog
             updatePublishers={loadPublisher}
-            id={publisher.id}
+            id={publisher.id.toString()}
             action="update"
           >
             <Button slot="trigger" variant="outline" size="icon">

@@ -87,6 +87,12 @@ pub struct Permissao {
     pub label: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct Cargo {
+    pub nome: String,
+    pub permissao: i32,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct LivroAsResponse {
     pub id: i32,

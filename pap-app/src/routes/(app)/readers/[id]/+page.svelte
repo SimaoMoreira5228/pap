@@ -82,7 +82,7 @@
       <div class="flex flex-row justify-start items-center gap-2">
         <H2>{reader.nome}</H2>
         {#if hasDeleteReaderPermission}
-          <Button variant="outline" size="icon" on:click={deleteReader}>
+          <Button variant="destructive" size="icon" on:click={deleteReader}>
             <Icon
               icon="material-symbols-light:delete-outline-rounded"
               class="w-8 h-8 text-secondary-muted"

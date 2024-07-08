@@ -14,6 +14,7 @@ const config = {
         "/",
         "/readers",
         "/readers/1",
+        "/librarians",
         "/authors",
         "/authors/1",
         "/books/1",

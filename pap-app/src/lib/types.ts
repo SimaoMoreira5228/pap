@@ -15,6 +15,12 @@ export interface Livro {
   requisitado: boolean;
 }
 
+export interface bibliotecario {
+  id: number;
+  nome: string;
+  cargo: string;
+}
+
 export interface Leitor {
   id: string;
   nome: string;
@@ -24,14 +30,14 @@ export interface Leitor {
 }
 
 export interface Categoria {
-  id: number,
-  nome: string,
+  id: number;
+  nome: string;
 }
 
 export interface Secao {
-  id: number,
-  id_categoria: number,
-  nome: string,
+  id: number;
+  id_categoria: number;
+  nome: string;
 }
 
 export interface SubCategoria {
@@ -69,6 +75,11 @@ export interface Editora {
   codigo_postal?: string;
   telefone?: string;
   email?: string;
+}
+
+export interface Cargo {
+  nome: string;
+  permissao: number;
 }
 
 export enum DatabaseConnectionStatus {

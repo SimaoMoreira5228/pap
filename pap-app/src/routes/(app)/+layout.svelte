@@ -10,13 +10,14 @@
   import { Sun, Moon } from "lucide-svelte";
   import { Toaster } from "svelte-sonner";
   import { toggleMode, setMode, localStorageKey } from "mode-watcher";
-  import { hasPermission } from "$lib/utils";
+  import { hasLibrariansPageAccess, hasPermission } from "$lib/utils";
 
   if (!localStorage.getItem(localStorageKey)) {
     setMode("light");
   }
 
   let settingsPermission = false;
+  let librariansPermission = false;
   let refreshBar = writable(false);
 
   afterNavigate(() => {
@@ -26,12 +27,14 @@
   $: if ($refreshBar) {
     (async () => {
       try {
-        if (await call<boolean>("check_librarians_existence")) {
-          if (jwtStore.get() !== "") {
+        if (jwtStore.get() !== "") {
+          if (await call<boolean>("check_librarians_existence")) {
             settingsPermission = await hasPermission("mudar_configuracoes");
+          } else {
+            settingsPermission = true;
           }
-        } else {
-          settingsPermission = true;
+
+          librariansPermission = await hasLibrariansPageAccess();
         }
       } catch (error) {
         toast.error(error as string);
@@ -41,21 +44,6 @@
     })();
   }
 </script>
-
-<Button
-  on:click={toggleMode}
-  variant="outline"
-  size="icon"
-  class="absolute right-2 top-2"
->
-  <Moon
-    class="rotate-0 w-[1.2rem] h-[1.2rem] scale-100 transition-all dark:-rotate-90 dark:scale-0"
-  />
-  <Sun
-    class="absolute w-[1.2rem] h-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
-  />
-  <span class="sr-only">Mudar o tema</span>
-</Button>
 
 <Toaster class="z-50" />
 
@@ -85,29 +73,50 @@
             class="w-[1.5rem] h-[1.5rem] text-secondary-foreground"
           />
         </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          on:click={() => goto("/readers")}
-        >
+        <Button variant="outline" size="icon" on:click={() => goto("/readers")}>
           <Icon
             icon="ph:book-open-user-light"
             class="w-[1.5rem] h-[1.5rem] text-secondary-foreground"
           />
         </Button>
       </div>
-      {#if settingsPermission}
-        <Button
-          variant="outline"
-          size="icon"
-          on:click={() => goto("/settings")}
-        >
+      <div class="flex flex-col gap-1">
+        {#if librariansPermission}
+          <Button
+            variant="outline"
+            size="icon"
+            on:click={() => goto("/librarians")}
+          >
+            <Icon
+              icon="ph:person-light"
+              class="w-[1.5rem] h-[1.5rem] text-secondary-foreground"
+            />
+          </Button>
+        {/if}
+        {#if settingsPermission}
+          <Button
+            variant="outline"
+            size="icon"
+            on:click={() => goto("/settings")}
+          >
+            <Icon
+              icon="ph:gear-fine-thin"
+              class="w-[1.5rem] h-[1.5rem] text-secondary-foreground"
+            />
+          </Button>
+        {/if}
+        <Button on:click={toggleMode} variant="outline" size="icon">
           <Icon
-            icon="carbon:settings-adjust"
-            class="w-[1.5rem] h-[1.5rem] text-secondary-foreground"
+            icon="ph:moon-thin"
+            class="w-[1.5rem] h-[1.5rem] text-secondary-foreground rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
           />
+          <Icon
+            icon="ph:sun-thin"
+            class="w-[1.5rem] h-[1.5rem] text-secondary-foreground absolute rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+          />
+          <span class="sr-only">Mudar o tema</span>
         </Button>
-      {/if}
+      </div>
     </div>
 
     <div class="border-l border-muted"></div>

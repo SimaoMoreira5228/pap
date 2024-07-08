@@ -78,7 +78,7 @@
       <div class="flex flex-row justify-start items-center gap-2">
         <H2>{author.nome}</H2>
         {#if hasDeleteAuthorPermission}
-          <Button variant="outline" size="icon" on:click={deleteAuthor}>
+          <Button variant="destructive" size="icon" on:click={deleteAuthor}>
             <Icon
               icon="material-symbols-light:delete-outline-rounded"
               class="w-8 h-8 text-secondary-muted"

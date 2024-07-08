@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 
 use crate::{
@@ -264,4 +265,177 @@ pub async fn get_librarian_permissions(
     })?;
 
     Ok(permissions)
+}
+
+#[derive(Serialize, Deserialize, sqlx::FromRow)]
+pub struct LibrarianAsResponse {
+    pub id: i32,
+    pub nome: String,
+    pub cargo: String,
+}
+
+#[tauri::command]
+pub async fn get_librarians(
+    token: String,
+    state: tauri::State<'_, Mutex<Option<Database>>>,
+) -> Result<Vec<LibrarianAsResponse>, String> {
+    let state_lock = state.lock().await;
+    let db = state_lock
+        .as_ref()
+        .ok_or("Base de dados não inicializada")?;
+
+    let pool = &db.pool;
+
+    verify_jwt(&token, &pool).await.map_err(|e| {
+        tracing::error!("Falha ao verificar token: {}", e);
+        format!("Falha ao verificar token: {}", e)
+    })?;
+
+    let librarians: Vec<LibrarianAsResponse> =
+        sqlx::query_as::<_, LibrarianAsResponse>("SELECT id, nome, cargo FROM bibliotecarios")
+            .fetch_all(pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Falha ao consultar: {}", e);
+                format!("Falha ao consultar: {}", e)
+            })?;
+
+    Ok(librarians)
+}
+
+#[tauri::command]
+pub async fn get_librarian_by_id(
+    token: String,
+    id: i32,
+    state: tauri::State<'_, Mutex<Option<Database>>>,
+) -> Result<LibrarianAsResponse, String> {
+    let state_lock = state.lock().await;
+    let db = state_lock
+        .as_ref()
+        .ok_or("Base de dados não inicializada")?;
+
+    let pool = &db.pool;
+
+    verify_jwt(&token, &pool).await.map_err(|e| {
+        tracing::error!("Falha ao verificar token: {}", e);
+        format!("Falha ao verificar token: {}", e)
+    })?;
+
+    let librarian: LibrarianAsResponse = sqlx::query_as::<_, LibrarianAsResponse>(
+        "SELECT id, nome, cargo FROM bibliotecarios WHERE id = ?",
+    )
+    .bind(id)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Falha ao consultar: {}", e);
+        format!("Falha ao consultar: {}", e)
+    })?;
+
+    Ok(librarian)
+}
+
+#[tauri::command]
+pub async fn delete_librarian(
+    token: String,
+    id: i32,
+    state: tauri::State<'_, Mutex<Option<Database>>>,
+) -> Result<(), String> {
+    let state_lock = state.lock().await;
+    let db = state_lock
+        .as_ref()
+        .ok_or("Base de dados não inicializada")?;
+
+    let pool = &db.pool;
+
+    verify_jwt(&token, &pool).await.map_err(|e| {
+        tracing::error!("Falha ao verificar token: {}", e);
+        format!("Falha ao verificar token: {}", e)
+    })?;
+
+    let count: i32 = sqlx::query_scalar("SELECT COUNT(*) FROM bibliotecarios WHERE id = ?")
+        .bind(id)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Falha ao consultar: {}", e);
+            format!("Falha ao consultar: {}", e)
+        })?;
+
+    if count == 0 {
+        return Err("Bibliotecário não existe".to_string());
+    }
+
+    sqlx::query("DELETE FROM bibliotecarios WHERE id = ?")
+        .bind(id)
+        .execute(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Falha ao excluir bibliotecário: {}", e);
+            format!("Falha ao excluir bibliotecário: {}", e)
+        })?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn update_librarian(
+    token: String,
+    id: i32,
+    name: Option<String>,
+    role: Option<String>,
+    password: Option<String>,
+    state: tauri::State<'_, Mutex<Option<Database>>>,
+) -> Result<(), String> {
+    let state_lock = state.lock().await;
+    let db = state_lock
+        .as_ref()
+        .ok_or("Base de dados não inicializada")?;
+
+    let pool = &db.pool;
+
+    verify_jwt(&token, &pool).await.map_err(|e| {
+        tracing::error!("Falha ao verificar token: {}", e);
+        format!("Falha ao verificar token: {}", e)
+    })?;
+
+    if name.is_some() {
+        sqlx::query("UPDATE bibliotecarios SET nome = ? WHERE id = ?")
+            .bind(&name.unwrap())
+            .bind(id)
+            .execute(pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Falha ao atualizar bibliotecário: {}", e);
+                format!("Falha ao atualizar bibliotecário: {}", e)
+            })?;
+    }
+
+    if role.is_some() {
+        sqlx::query("UPDATE bibliotecarios SET cargo = ? WHERE id = ?")
+            .bind(&role.unwrap())
+            .bind(id)
+            .execute(pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Falha ao atualizar bibliotecário: {}", e);
+                format!("Falha ao atualizar bibliotecário: {}", e)
+            })?;
+    }
+
+    if password.is_some() {
+        let hashed_password = bcrypt::hash(&password.unwrap(), bcrypt::DEFAULT_COST).unwrap();
+
+        sqlx::query("UPDATE bibliotecarios SET password = ? WHERE id = ?")
+            .bind(&hashed_password)
+            .bind(id)
+            .execute(pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Falha ao atualizar bibliotecário: {}", e);
+                format!("Falha ao atualizar bibliotecário: {}", e)
+            })?;
+    }
+
+    Ok(())
 }
