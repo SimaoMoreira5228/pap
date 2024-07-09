@@ -34,52 +34,54 @@
 
 <div class="flex flex-col gap-4 overflow-auto w-full h-full">
   <H3>Requisicões</H3>
-  {#if request.length === 0}
-    <div class="flex justify-center items-center w-full h-full">
-      <H3>Nenhuma requisição encontrada</H3>
-    </div>
-  {:else}
-    {#each request as req}
-      <div class="flex flex-col gap-2 border p-2 rounded-lg overflow-auto">
-        {#await getBook(req.id_livro_requisitado)}
-          <div class="flex justify-center items-center w-full h-full">
-            <Icon
-              icon="svg-spinners:270-ring-with-bg"
-              class="w-8 h-8 text-primary"
-            />
-          </div>
-        {:then book}
-          <div class="flex flex-col gap-2 overflow-auto">
-            <div
-              class="flex flex-row items-center justify-between gap-4 w-full"
-            >
-              <div class="flex flex-col gap-2">
-                <a href="/books/{book.id}">Livro: {book.nome}</a>
-                {#await getLeitor(req.id_leitor)}
-                  <div class="flex justify-center items-center w-full h-full">
-                    <Icon
-                      icon="svg-spinners:270-ring-with-bg"
-                      class="w-2 h-2 text-primary"
-                    />
-                  </div>
-                {:then leitor}
-                  <a href="/books/{leitor.id}">Leitor: {leitor.nome}</a>
-                {/await}
-              </div>
-              <div class="flex flex-col items-center gap-2">
-                <p>{getDate(req.data_requisicao)}</p>
-                <p>
-                  {#if req.data_entrega}
-                    {getDate(req.data_entrega)}
-                  {:else}
-                    <BookReturnDialog bookId={book.id} updateBook={load} />
-                  {/if}
-                </p>
+  <div class="flex flex-col gap-2 overflow-auto">
+    {#if request.length === 0}
+      <div class="flex justify-center items-center w-full h-full">
+        <H3>Nenhuma requisição encontrada</H3>
+      </div>
+    {:else}
+      {#each request as req}
+        <div class="flex flex-col gap-2 border p-2 rounded-lg">
+          {#await getBook(req.id_livro_requisitado)}
+            <div class="flex justify-center items-center w-full h-full">
+              <Icon
+                icon="svg-spinners:270-ring-with-bg"
+                class="w-8 h-8 text-primary"
+              />
+            </div>
+          {:then book}
+            <div class="flex flex-col gap-2">
+              <div
+                class="flex flex-row items-center justify-between gap-4 w-full"
+              >
+                <div class="flex flex-col gap-2">
+                  <a href="/books/{book.id}">Livro: {book.nome}</a>
+                  {#await getLeitor(req.id_leitor)}
+                    <div class="flex justify-center items-center w-full h-full">
+                      <Icon
+                        icon="svg-spinners:270-ring-with-bg"
+                        class="w-2 h-2 text-primary"
+                      />
+                    </div>
+                  {:then leitor}
+                    <a href="/books/{leitor.id}">Leitor: {leitor.nome}</a>
+                  {/await}
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                  <p>{getDate(req.data_requisicao)}</p>
+                  <p>
+                    {#if req.data_entrega}
+                      {getDate(req.data_entrega)}
+                    {:else}
+                      <BookReturnDialog bookId={book.id} updateBook={load} />
+                    {/if}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        {/await}
-      </div>
-    {/each}
-  {/if}
+          {/await}
+        </div>
+      {/each}
+    {/if}
+  </div>
 </div>
