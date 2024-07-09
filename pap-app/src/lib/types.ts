@@ -9,7 +9,6 @@ export interface Livro {
   autor?: string;
   autor_id?: number;
   editora: string;
-  id_secao: number;
   categoria?: string;
   sub_categoria?: string;
   requisitado: boolean;
@@ -31,12 +30,6 @@ export interface Leitor {
 
 export interface Categoria {
   id: number;
-  nome: string;
-}
-
-export interface Secao {
-  id: number;
-  id_categoria: number;
   nome: string;
 }
 

@@ -145,7 +145,6 @@ pub async fn get_books_by_author_id(
             editora: publisher,
             idioma: book.idioma,
             nome: book.nome,
-            id_secao: book.id_secao,
             n_paginas: book.n_paginas,
             requisitado: is_requested > 0,
         });

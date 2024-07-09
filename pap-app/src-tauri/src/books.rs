@@ -116,7 +116,6 @@ pub async fn get_books(
             autor: Some(autor),
             autor_id: book.id_autor,
             editora: publisher,
-            id_secao: book.id_secao,
             categoria: Some(categoria),
             sub_categoria: Some(sub_categoria),
             requisitado: is_requested > 0,
@@ -221,7 +220,6 @@ pub async fn get_book_by_id(
         autor: Some(autor),
         autor_id: book.id_autor,
         editora: publisher,
-        id_secao: book.id_secao,
         categoria: Some(categoria),
         sub_categoria: Some(sub_categoria),
         requisitado: is_requested > 0,
@@ -296,27 +294,7 @@ pub async fn create_book(
         format!("Falha ao verificar token: {}", e)
     })?;
 
-    let category_id: i32 = sqlx::query_scalar(
-        "SELECT id FROM categorias WHERE (SELECT id_categoria FROM sub_categorias WHERE id = ?)",
-    )
-    .bind(&sub_category_id)
-    .fetch_one(pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Falha ao consultar categoria: {}", e);
-        format!("Falha ao consultar categoria: {}", e)
-    })?;
-
-    let secao_id: i32 = sqlx::query_scalar("SELECT id FROM secoes WHERE id_categoria = ?")
-        .bind(category_id)
-        .fetch_one(pool)
-        .await
-        .map_err(|e| {
-            tracing::error!("Falha ao consultar secao: {}", e);
-            format!("Falha ao consultar secao: {}", e)
-        })?;
-
-    sqlx::query("INSERT INTO livros (nome, resumo, n_paginas, idioma, img_url, ano_edicao, id_autor, id_editora, id_secao, id_sub_categoria) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    sqlx::query("INSERT INTO livros (nome, resumo, n_paginas, idioma, img_url, ano_edicao, id_autor, id_editora, id_sub_categoria) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
         .bind(name)
         .bind(resume)
         .bind(n_pages)
@@ -325,7 +303,6 @@ pub async fn create_book(
         .bind(ano_edicao)
         .bind(author_id)
         .bind(publisher_id)
-        .bind(secao_id)
         .bind(sub_category_id)
         .execute(pool)
         .await
@@ -364,27 +341,7 @@ pub async fn update_book(
         format!("Falha ao verificar token: {}", e)
     })?;
 
-    let category_id: i32 = sqlx::query_scalar(
-        "SELECT id FROM categorias WHERE (SELECT id_categoria FROM sub_categorias WHERE id = ?)",
-    )
-    .bind(&sub_category_id)
-    .fetch_one(pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Falha ao consultar categoria: {}", e);
-        format!("Falha ao consultar categoria: {}", e)
-    })?;
-
-    let secao_id: i32 = sqlx::query_scalar("SELECT id FROM secoes WHERE id_categoria = ?")
-        .bind(category_id)
-        .fetch_one(pool)
-        .await
-        .map_err(|e| {
-            tracing::error!("Falha ao consultar secao: {}", e);
-            format!("Falha ao consultar secao: {}", e)
-        })?;
-
-    sqlx::query("UPDATE livros SET nome = ?, resumo = ?, n_paginas = ?, idioma = ?, img_url = ?, ano_edicao = ?, id_autor = ?, id_editora = ?, id_secao = ?, id_sub_categoria = ? WHERE id = ?")
+    sqlx::query("UPDATE livros SET nome = ?, resumo = ?, n_paginas = ?, idioma = ?, img_url = ?, ano_edicao = ?, id_autor = ?, id_editora = ?, id_sub_categoria = ? WHERE id = ?")
         .bind(name)
         .bind(resume)
         .bind(n_pages)
@@ -393,7 +350,6 @@ pub async fn update_book(
         .bind(ano_edicao)
         .bind(author_id)
         .bind(publisher_id)
-        .bind(secao_id)
         .bind(sub_category_id)
         .bind(id)
         .execute(pool)

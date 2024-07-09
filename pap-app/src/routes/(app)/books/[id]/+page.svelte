@@ -87,6 +87,7 @@
         <a href={`/authors/${book.autor_id}`}>
           <P class="text-muted-foreground">{book.autor}</P>
         </a>
+        <p class="text-muted-foreground">{book.sub_categoria}</p>
       </div>
       <div>
         <P class="text-muted-foreground">{book.ano_edicao}</P>

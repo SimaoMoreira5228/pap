@@ -3,6 +3,7 @@
 
 mod authors;
 mod books;
+mod categories;
 mod db_structs;
 mod jwt;
 mod librarians;
@@ -19,6 +20,7 @@ use authors::{
     get_authors_count, get_books_by_author_id, update_author,
 };
 use books::{create_book, delete_book, get_book_by_id, get_books, get_books_count, update_book};
+use categories::{create_category, delete_category, get_categories};
 use librarians::{
     check_librarians_existence, delete_librarian, does_librarian_has_permission,
     does_librarian_has_permission_by_acao, get_librarian_by_id, get_librarian_permissions,
@@ -33,10 +35,12 @@ use readers::{
     create_reader, delete_reader, get_reader_by_id, get_readers, get_readers_by_name,
     get_readers_count, get_requested_books_by_reader_id, update_reader,
 };
-use requests::{get_requested_book_by_book_id, request_book, return_book};
-use roles::{delete_role, get_roles, update_role, create_role, get_role_by_name};
+use requests::{get_requested_book_by_book_id, request_book, return_book, get_requests};
+use roles::{create_role, delete_role, get_role_by_name, get_roles, update_role};
 use sqlx::{mysql::MySqlPoolOptions, MySql, Pool};
-use sub_categories::get_sub_categories_by_name;
+use sub_categories::{
+    create_sub_category, delete_sub_category, get_sub_categories, get_sub_categories_by_name,
+};
 use tables::create_tables;
 use tauri::Manager;
 use tokio::sync::Mutex;
@@ -142,6 +146,7 @@ fn main() {
             request_book,
             get_requested_book_by_book_id,
             return_book,
+            get_requests,
             // librarians
             login,
             new_librarian,
@@ -185,6 +190,13 @@ fn main() {
             delete_publisher,
             // sub-categories
             get_sub_categories_by_name,
+            get_sub_categories,
+            delete_sub_category,
+            create_sub_category,
+            // categories
+            get_categories,
+            delete_category,
+            create_category,
             // roles
             get_roles,
             create_role,

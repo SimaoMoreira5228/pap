@@ -79,6 +79,26 @@
             class="w-[1.5rem] h-[1.5rem] text-secondary-foreground"
           />
         </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          on:click={() => goto("/categories")}
+        >
+          <Icon
+            icon="ph:list-bullets-light"
+            class="w-[1.5rem] h-[1.5rem] text-secondary-foreground"
+          />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          on:click={() => goto("/requests")}
+        >
+          <Icon
+            icon="ph:clipboard-text-light"
+            class="w-[1.5rem] h-[1.5rem] text-secondary-foreground"
+          />
+        </Button>
       </div>
       <div class="flex flex-col gap-1">
         {#if librariansPermission}

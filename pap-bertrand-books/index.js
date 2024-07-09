@@ -6,6 +6,7 @@ import {
   subCategoriesUrls,
 } from "./arrays.js";
 import mysql from "mysql2/promise";
+import { exit } from "process";
 
 let instances = 0;
 
@@ -30,7 +31,6 @@ class Book {
 
   id_autor;
   id_editora;
-  id_secao;
   id_categoria;
   id_sub_categoria;
 
@@ -64,32 +64,6 @@ class Book {
 
     this.id_categoria = rows[0].id_categoria;
     this.id_sub_categoria = rows[0].id;
-  }
-
-  async setSecaoId() {
-    const [rows, fields] = await pool.query(
-      "SELECT id FROM secoes WHERE id_categoria = ?",
-      [this.id_categoria]
-    );
-
-    if (rows.length === 0) {
-      const [rows, fields] = await pool.query(
-        "SELECT nome FROM categorias WHERE id = ?",
-        [this.id_categoria]
-      );
-
-      await pool.query(
-        "INSERT INTO secoes (id_categoria, nome) VALUES (?, ?)",
-        [this.id_categoria, rows[0].nome]
-      );
-    }
-
-    const [rows2, fields2] = await pool.query(
-      "SELECT id FROM secoes WHERE id_categoria = ?",
-      [this.id_categoria]
-    );
-
-    this.id_secao = rows2[0].id;
   }
 
   async setAuthorId() {
@@ -147,7 +121,6 @@ class Book {
   async initialize() {
     await this.setAuthorId();
     await this.setCategoriesIds();
-    await this.setSecaoId();
     await this.setEditoraId();
   }
 
@@ -155,7 +128,7 @@ class Book {
     await this.initialize();
 
     await pool.query(
-      "INSERT INTO livros (nome, resumo, n_paginas, idioma, img_url, ano_edicao, id_autor, id_editora, id_secao, id_sub_categoria) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO livros (nome, resumo, n_paginas, idioma, img_url, ano_edicao, id_autor, id_editora, id_sub_categoria) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         this.title,
         this.resume,
@@ -165,14 +138,13 @@ class Book {
         this.anoEdicao,
         this.id_autor,
         this.id_editora,
-        this.id_secao,
         this.id_sub_categoria,
       ]
     );
   }
 }
 
-async function getSubCategoriesUrls() {
+async function getSubCategoriesUrls(save = false) {
   const subCategories = await Promise.all(
     CategoriesUrls.map(async (link, index) => {
       while (instances >= 3) {
@@ -193,11 +165,15 @@ async function getSubCategoriesUrls() {
       });
 
       const subCategoriesUl = await page.$(`#${subCategoriesUlIds[index]}`);
-      const subCategories = await subCategoriesUl.$$eval("li", (lis) =>
-        lis.map((li) => {
-          const subCategory = li.querySelector("a").href;
-          return subCategory;
-        })
+      const subCategories = await subCategoriesUl.$$eval(
+        "li",
+        (lis, index) =>
+          lis.map((li) => {
+            const subCategory = li.querySelector("a").href;
+            const subCategoryName = li.querySelector("a").textContent;
+            return { index, subCategory, subCategoryName };
+          }),
+        index
       );
 
       await page.close();
@@ -207,7 +183,26 @@ async function getSubCategoriesUrls() {
     })
   );
 
-  writeToFile("subCategories", subCategories.flat());
+  if (save) {
+    await Promise.all(subCategories.flat().map(async (subCategory) => {
+      const [rows, fields] = await pool.query(
+        "SELECT id FROM sub_categorias WHERE nome = ?",
+        [subCategory.subCategoryName]
+      );
+
+      if (rows.length === 0) {
+        await pool.query(
+          "INSERT INTO sub_categorias (id_categoria, nome) VALUES (?, ?)",
+          [subCategory.index + 1, subCategory.subCategoryName]
+        );
+      }
+    }));
+  }
+
+  writeToFile(
+    "subCategories",
+    subCategories.flat().map((subCategory) => subCategory.subCategory)
+  );
 }
 
 async function getBooksUrls() {
@@ -398,3 +393,7 @@ async function getBooksInfo() {
     })
   );
 }
+
+(async () => {
+  await getBooksInfo();
+})();

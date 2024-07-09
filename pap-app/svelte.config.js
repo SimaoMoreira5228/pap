@@ -12,6 +12,8 @@ const config = {
     prerender: {
       entries: [
         "/",
+        "/categories",
+        "/requests",
         "/readers",
         "/readers/1",
         "/librarians",

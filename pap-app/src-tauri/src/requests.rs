@@ -156,3 +156,31 @@ pub async fn return_book(
 
     Ok(())
 }
+
+#[tauri::command]
+pub async fn get_requests(
+    token: String,
+    state: tauri::State<'_, Mutex<Option<Database>>>,
+) -> Result<Vec<Requisicao>, String> {
+    let state_lock = state.lock().await;
+    let db = state_lock
+        .as_ref()
+        .ok_or("Base de dados não inicializada")?;
+
+    let pool = &db.pool;
+
+    verify_jwt(&token, &pool).await.map_err(|e| {
+        tracing::error!("Falha ao verificar token: {}", e);
+        format!("Falha ao verificar token: {}", e)
+    })?;
+
+    let requests = sqlx::query_as::<_, Requisicao>("SELECT * FROM requisicoes")
+        .fetch_all(pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Falha ao consultar requisições: {}", e);
+            format!("Falha ao consultar requisições: {}", e)
+        })?;
+
+    Ok(requests)
+}

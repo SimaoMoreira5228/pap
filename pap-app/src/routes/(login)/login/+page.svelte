@@ -19,7 +19,7 @@
   let name = "";
   let password = "";
   let roleName = "";
-  let choosenPermissions: number[] = [28];
+  let choosenPermissions: number[] = [25];
 
   let error = "";
 

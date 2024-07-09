@@ -53,7 +53,6 @@ pub struct Livro {
     pub ano_edicao: Option<String>,
     pub id_autor: Option<i32>,
     pub id_editora: i32,
-    pub id_secao: i32,
     pub id_sub_categoria: Option<i32>,
 }
 
@@ -64,13 +63,6 @@ pub struct Requisicao {
     pub id_livro_requisitado: i32,
     pub data_requisicao: chrono::DateTime<chrono::Utc>,
     pub data_entrega: Option<chrono::DateTime<chrono::Utc>>,
-}
-
-#[derive(Serialize, Deserialize, sqlx::FromRow)]
-pub struct Secao {
-    pub id: i32,
-    pub id_categoria: i32,
-    pub nome: String,
 }
 
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
@@ -105,7 +97,6 @@ pub struct LivroAsResponse {
     pub autor: Option<String>,
     pub autor_id: Option<i32>,
     pub editora: String,
-    pub id_secao: i32,
     pub categoria: Option<String>,
     pub sub_categoria: Option<String>,
     pub requisitado: bool,

@@ -2,3 +2,4 @@ files/
 output.txt
 node_modules/
 yarn.lock
+pnpm-lock.yaml

@@ -156,13 +156,15 @@
       <div class="flex flex-row gap-12">
         <div>
           {#if $currentPageStore - 1 >= 0}
-            <Button
-              on:click={() => ($currentPageStore = pages.firstPage)}
-              variant="outline"
-              size="icon"
-            >
-              {pages.firstPage}
-            </Button>
+            {#if pages.backPages.find((page) => page === pages.firstPage) === undefined}
+              <Button
+                on:click={() => ($currentPageStore = pages.firstPage)}
+                variant="outline"
+                size="icon"
+              >
+                {pages.firstPage + 1}
+              </Button>
+            {/if}
             {#each pages.backPages as page}
               {#if page >= 0}
                 <Button

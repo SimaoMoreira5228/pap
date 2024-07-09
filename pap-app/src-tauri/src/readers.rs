@@ -370,7 +370,6 @@ pub async fn get_requested_books_by_reader_id(
             autor: Some(autor),
             autor_id: book.id_autor,
             editora: publisher,
-            id_secao: book.id_secao,
             categoria: Some(categoria),
             sub_categoria: Some(sub_categoria),
             requisitado: is_requested > 0,

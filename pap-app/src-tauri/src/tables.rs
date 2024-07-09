@@ -45,14 +45,11 @@ pub async fn create_tables(pool: &Pool<MySql>) -> Result<(), String> {
   `ano_edicao` varchar(255) DEFAULT NULL,
   `id_autor` int(11) DEFAULT NULL,
   `id_editora` int(11) NOT NULL,
-  `id_secao` int(11) NOT NULL,
   `id_sub_categoria` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `livros_id_secao` (`id_secao`),
   KEY `livros_id_autor` (`id_autor`),
   KEY `livros_id_editora` (`id_editora`),
   KEY `livros_ibfk_5` (`id_sub_categoria`),
-  CONSTRAINT `livros_ibfk_2` FOREIGN KEY (`id_secao`) REFERENCES `secoes` (`id`),
   CONSTRAINT `livros_ibfk_3` FOREIGN KEY (`id_autor`) REFERENCES `autores` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `livros_ibfk_4` FOREIGN KEY (`id_editora`) REFERENCES `editoras` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `livros_ibfk_5` FOREIGN KEY (`id_sub_categoria`) REFERENCES `sub_categorias` (`id`)
@@ -87,16 +84,13 @@ pub async fn create_tables(pool: &Pool<MySql>) -> Result<(), String> {
 (19,'criar_requisicao','Criar Requisição'),
 (20,'atualizar_requisicao','Atualizar Requisição'),
 (21,'apagar_requisicao','Apagar Requisição'),
-(22,'criar_secao','Criar Seção'),
-(23,'atualizar_secao','Atualizar Seção'),
-(24,'apagar_secao','Apagar Seção'),
-(25,'criar_sub_categoria','Criar Subcategoria'),
-(26,'atualizar_sub_categoria','Atualizar Subcategoria'),
-(27,'apagar_sub_categoria','Apagar Subcategoria'),
-(28,'mudar_configuracoes','Mudar Configurações'),
-(29,'criar_editora', 'Criar Editora'),
-(30,'atualizar_editora', 'Atualizar Editora'),
-(31,'apagar_editora', 'Apagar Editora')
+(22,'criar_sub_categoria','Criar Subcategoria'),
+(23,'atualizar_sub_categoria','Atualizar Subcategoria'),
+(24,'apagar_sub_categoria','Apagar Subcategoria'),
+(25,'mudar_configuracoes','Mudar Configurações'),
+(26,'criar_editora', 'Criar Editora'),
+(27,'atualizar_editora', 'Atualizar Editora'),
+(28,'apagar_editora', 'Apagar Editora')
 ON DUPLICATE KEY UPDATE id=VALUES(id);";
 
     let cargos = "CREATE TABLE IF NOT EXISTS `cargos` (
@@ -118,15 +112,6 @@ ON DUPLICATE KEY UPDATE id=VALUES(id);";
   CONSTRAINT `requisicoes_ibfk_1` FOREIGN KEY (`id_leitor`) REFERENCES `leitores` (`id`),
   CONSTRAINT `requisicoes_ibfk_2` FOREIGN KEY (`id_livro_requisitado`) REFERENCES `livros` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
-
-    let sections = "CREATE TABLE IF NOT EXISTS `secoes` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `id_categoria` int(11) NOT NULL,
-  `nome` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `seccoes_id_categoria` (`id_categoria`),
-  CONSTRAINT `secoes_ibfk_1` FOREIGN KEY (`id_categoria`) REFERENCES `categorias` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
 
     let sub_categories = "CREATE TABLE IF NOT EXISTS `sub_categorias` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -185,11 +170,6 @@ ON DUPLICATE KEY UPDATE id=VALUES(id);";
             tracing::error!("Falha ao criar tabela sub_categorias: {}", e);
             format!("Falha ao criar tabela sub_categorias: {}", e)
         })?;
-
-    sqlx::query(sections).execute(pool).await.map_err(|e| {
-        tracing::error!("Falha ao criar tabela seccoes: {}", e);
-        format!("Falha ao criar tabela seccoes: {}", e)
-    })?;
 
     sqlx::query(publishers).execute(pool).await.map_err(|e| {
         tracing::error!("Falha ao criar tabela editoras: {}", e);
