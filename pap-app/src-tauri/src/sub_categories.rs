@@ -23,8 +23,8 @@ pub async fn get_sub_categories(
         .fetch_all(pool)
         .await
         .map_err(|e| {
-            tracing::error!("Falha ao consultar sub-categorias: {}", e);
-            format!("Falha ao consultar sub-categorias: {}", e)
+            tracing::error!("Falha ao consultar subcategorias: {}", e);
+            format!("Falha ao consultar subcategorias: {}", e)
         })?;
 
     Ok(sub_categories)
@@ -49,8 +49,8 @@ pub async fn get_sub_categories_by_name(
     .fetch_all(pool)
     .await
     .map_err(|e| {
-        tracing::error!("Falha ao consultar sub-categorias: {}", e);
-        format!("Falha ao consultar sub-categorias: {}", e)
+        tracing::error!("Falha ao consultar subcategorias: {}", e);
+        format!("Falha ao consultar subcategorias: {}", e)
     })?;
 
     Ok(sub_categories)

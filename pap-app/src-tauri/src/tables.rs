@@ -8,13 +8,13 @@ pub async fn create_tables(pool: &Pool<MySql>) -> Result<(), String> {
   `data_nasc` varchar(255) DEFAULT NULL,
   `data_morte` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2110 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
 
     let categories = "CREATE TABLE IF NOT EXISTS `categorias` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `nome` varchar(255) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
 
     let publishers = "CREATE TABLE IF NOT EXISTS `editoras` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -24,7 +24,7 @@ pub async fn create_tables(pool: &Pool<MySql>) -> Result<(), String> {
   `telefone` varchar(255) DEFAULT NULL,
   `email` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=414 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
 
     let readers = "CREATE TABLE IF NOT EXISTS `leitores` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -33,7 +33,7 @@ pub async fn create_tables(pool: &Pool<MySql>) -> Result<(), String> {
   `telefone` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
 
     let books = "CREATE TABLE IF NOT EXISTS `livros` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -53,14 +53,14 @@ pub async fn create_tables(pool: &Pool<MySql>) -> Result<(), String> {
   CONSTRAINT `livros_ibfk_3` FOREIGN KEY (`id_autor`) REFERENCES `autores` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `livros_ibfk_4` FOREIGN KEY (`id_editora`) REFERENCES `editoras` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `livros_ibfk_5` FOREIGN KEY (`id_sub_categoria`) REFERENCES `sub_categorias` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2921 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
 
     let permissions = "CREATE TABLE IF NOT EXISTS `permissoes` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `acao` varchar(255) NOT NULL,
   `label` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
 
     let permissions_insert = "INSERT INTO `permissoes` (id, acao, label) VALUES
 (1,'criar_livro','Criar Livro'),
@@ -109,9 +109,9 @@ ON DUPLICATE KEY UPDATE id=VALUES(id);";
   PRIMARY KEY (`id`),
   KEY `requisicoes_id_leitor` (`id_leitor`),
   KEY `requisicoes_id_livro_requisitado` (`id_livro_requisitado`),
-  CONSTRAINT `requisicoes_ibfk_1` FOREIGN KEY (`id_leitor`) REFERENCES `leitores` (`id`),
-  CONSTRAINT `requisicoes_ibfk_2` FOREIGN KEY (`id_livro_requisitado`) REFERENCES `livros` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
+  CONSTRAINT `requisicoes_ibfk_1` FOREIGN KEY (`id_leitor`) REFERENCES `leitores` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `requisicoes_ibfk_2` FOREIGN KEY (`id_livro_requisitado`) REFERENCES `livros` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
 
     let sub_categories = "CREATE TABLE IF NOT EXISTS `sub_categorias` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -120,7 +120,7 @@ ON DUPLICATE KEY UPDATE id=VALUES(id);";
   PRIMARY KEY (`id`),
   KEY `FK_sub_categoria_categorias` (`id_categoria`),
   CONSTRAINT `FK_sub_categoria_categorias` FOREIGN KEY (`id_categoria`) REFERENCES `categorias` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=331 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
 
     let librarians = "CREATE TABLE IF NOT EXISTS `bibliotecarios` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -128,7 +128,7 @@ ON DUPLICATE KEY UPDATE id=VALUES(id);";
   `password` varchar(255) NOT NULL,
   `cargo` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
 
     sqlx::query(permissions).execute(pool).await.map_err(|e| {
         tracing::error!("Falha ao criar tabela permissoes: {}", e);

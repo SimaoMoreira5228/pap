@@ -58,8 +58,8 @@ pub async fn delete_category(
             .fetch_all(pool)
             .await
             .map_err(|e| {
-                tracing::error!("Falha ao consultar sub-categorias: {}", e);
-                format!("Falha ao consultar sub-categorias: {}", e)
+                tracing::error!("Falha ao consultar subcategorias: {}", e);
+                format!("Falha ao consultar subcategorias: {}", e)
             })?;
 
     for sub_category in sub_categories {

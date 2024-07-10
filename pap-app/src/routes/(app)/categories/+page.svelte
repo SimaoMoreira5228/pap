@@ -82,7 +82,7 @@
 </script>
 
 <div class="flex flex-col gap-2 overflow-auto w-full h-full">
-  <H3>Categorias & Sub-categorias</H3>
+  <H3>Categorias & Subcategorias</H3>
   <Accordion.Root class="w-full overflow-auto">
     {#each categories as category}
       <Accordion.Item
