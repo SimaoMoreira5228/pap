@@ -101,7 +101,7 @@
         isLoading.set(true);
 
         const publisher = await call<Editora>("get_publisher_by_id", {
-          id,
+          id: parseInt(id || "0") || 0,
         });
 
         name = publisher.nome;
