@@ -14,7 +14,7 @@
   class={"flex flex-row gap-2 " + className}
   on:submit|preventDefault={() => searchFunction(search)}
 >
-  <Input bind:value={search} placeholder="Pesquisar livros" />
+  <Input bind:value={search} placeholder="Pesquisar..." />
   <Button type="submit" variant="outline" size="icon">
     <Search class="w-[1.2rem] h-[1.2rem]" />
   </Button>
